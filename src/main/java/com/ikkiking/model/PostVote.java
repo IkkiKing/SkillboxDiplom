@@ -12,12 +12,12 @@ public class PostVote {
     private int id;
 
     @NotNull(message = "post_votes.user_id may not be null")
-    @Column(name = "user_id")
-    private int userId;
+    @ManyToOne(cascade = CascadeType.ALL)
+    private User user;
 
     @NotNull(message = "post_votes.post_id may not be null")
-    @Column(name = "post_id")
-    private int postId;
+    @ManyToOne(cascade = CascadeType.ALL)
+    private Post post;
 
     @NotNull(message = "post_votes.time may not be null")
     private Date time;
@@ -25,4 +25,43 @@ public class PostVote {
     @NotNull(message = "post_votes.value may not be null")
     private boolean value;
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Post getPost() {
+        return post;
+    }
+
+    public void setPost(Post post) {
+        this.post = post;
+    }
+
+    public Date getTime() {
+        return time;
+    }
+
+    public void setTime(Date time) {
+        this.time = time;
+    }
+
+    public boolean isValue() {
+        return value;
+    }
+
+    public void setValue(boolean value) {
+        this.value = value;
+    }
 }
