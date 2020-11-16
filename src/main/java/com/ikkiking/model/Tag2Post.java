@@ -12,10 +12,10 @@ public class Tag2Post {
 
     @NotNull(message = "tag2post.post_id may not be null")
     @Column(name = "post_id")
-    private String postId;
+    private int postId;
 
 
     @NotNull(message = "tag2post.tag_id may not be null")
     @Column(name = "tag_id")
-    private String tagId;
+    private int tagId;
 }
