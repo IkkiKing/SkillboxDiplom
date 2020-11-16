@@ -1,6 +1,7 @@
 package com.ikkiking.repository;
 
-import com.gmail.ikkiking.model.GlobalSettings;
+
+import com.ikkiking.model.GlobalSettings;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
