@@ -2,6 +2,6 @@ package com.ikkiking.model;
 
 public enum ModerationStatus {
     NEW,
-    ACCEPTE,
+    ACCEPTED,
     DECLINED
 }
