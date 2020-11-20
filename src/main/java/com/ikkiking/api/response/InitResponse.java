@@ -8,21 +8,23 @@ import org.springframework.stereotype.Component;
 public class InitResponse {
 
 
-    private String title = "Sssss";
+    @Value("${blog.title}")
+    private String title;
 
+    @Value("${blog.subtitle}")
+    private String subtitle;
 
-    private String subtitle = "Ssss1s";
+    @Value("${blog.phone}")
+    private String phone;
 
-
-    private String phone= "Ssssadasd1s";
-
-
+    @Value("${blog.email}")
+    @JsonProperty("e_mail")
     private String email;
 
-
+    @Value("${blog.copyright}")
     private String copyright;
 
-
+    @Value("${blog.copyrightFrom}")
     private String copyrightFrom;
 
 
