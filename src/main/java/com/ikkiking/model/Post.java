@@ -51,11 +51,11 @@ public class Post {
     )
     private List<Tag> tags;
 
-    @OneToMany(mappedBy = "post_id", fetch = FetchType.LAZY)
+    /*@OneToMany(mappedBy = "post_id", fetch = FetchType.LAZY)
     private Collection<PostComments> postComments;
 
     @OneToMany(mappedBy = "post_id", fetch = FetchType.LAZY)
-    private Collection<PostVote> postVotes;
+    private Collection<PostVote> postVotes;*/
 
     public int getId() {
         return id;
@@ -137,7 +137,7 @@ public class Post {
         this.tags = tags;
     }
 
-    public Collection<PostComments> getPostComments() {
+    /*public Collection<PostComments> getPostComments() {
         return postComments;
     }
 
@@ -151,5 +151,5 @@ public class Post {
 
     public void setPostVotes(Collection<PostVote> postVotes) {
         this.postVotes = postVotes;
-    }
+    }*/
 }

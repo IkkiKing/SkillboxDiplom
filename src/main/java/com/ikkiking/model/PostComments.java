@@ -12,7 +12,7 @@ public class PostComments {
     private int id;
 
     @Column(name = "parent_id")
-    private PostComments postComments;
+    private int parent_id;
 
     @NotNull(message = "post_comments.post_id may not be null")
     @JoinColumn(name = "post_id")
@@ -38,12 +38,12 @@ public class PostComments {
         this.id = id;
     }
 
-    public PostComments getPostComments() {
-        return postComments;
+    public int getParent_id() {
+        return parent_id;
     }
 
-    public void setPostComments(PostComments postComments) {
-        this.postComments = postComments;
+    public void setParent_id(int parent_id) {
+        this.parent_id = parent_id;
     }
 
     public Post getPost() {

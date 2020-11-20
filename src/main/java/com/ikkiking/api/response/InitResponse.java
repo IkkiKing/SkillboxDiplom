@@ -7,23 +7,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class InitResponse {
 
-    @Value("${blog.title}")
-    private String title;
 
-    @Value("${blog.subtitle}")
-    private String subtitle;
+    private String title = "Sssss";
 
-    @Value("${blog.phone}")
-    private String phone;
 
-    @Value("${blog.email}")
-    @JsonProperty("e_mail")
+    private String subtitle = "Ssss1s";
+
+
+    private String phone= "Ssssadasd1s";
+
+
     private String email;
 
-    @Value("${blog.copyright}")
+
     private String copyright;
 
-    @Value("${blog.copyrightFrom}")
+
     private String copyrightFrom;
 
 
