@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class InitResponse {
 
+
     @Value("${blog.title}")
     private String title;
 

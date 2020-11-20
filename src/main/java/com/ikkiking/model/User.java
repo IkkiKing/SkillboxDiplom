@@ -32,14 +32,14 @@ public class User {
 
     private String text;
 
-    @OneToMany(mappedBy = "user_id", fetch = FetchType.LAZY)
+    /*@OneToMany(mappedBy = "user_id", fetch = FetchType.LAZY)
     private Collection<Post> posts;
 
     @OneToMany(mappedBy = "user_id", fetch = FetchType.LAZY)
     private Collection<PostComments> postComments;
 
     @OneToMany(mappedBy = "user_id", fetch = FetchType.LAZY)
-    private Collection<PostVote> postVotes;
+    private Collection<PostVote> postVotes;*/
 
     public int getId() {
         return id;
@@ -106,7 +106,7 @@ public class User {
         this.text = text;
     }
 
-    public Collection<Post> getPosts() {
+    /*public Collection<Post> getPosts() {
         return posts;
     }
 
@@ -128,5 +128,5 @@ public class User {
 
     public void setPostVotes(Collection<PostVote> postVotes) {
         this.postVotes = postVotes;
-    }
+    }*/
 }
