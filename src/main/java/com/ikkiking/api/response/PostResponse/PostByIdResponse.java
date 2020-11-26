@@ -6,7 +6,7 @@ import java.util.List;
 
 public class PostByIdResponse {
     private Integer id;
-    private Date timestamp;
+    private long timestamp;
     private boolean active;
     private User user;
     private String title;
@@ -17,7 +17,7 @@ public class PostByIdResponse {
     private List<Comment> comments;
     private List<String> tags;
 
-    public PostByIdResponse(int id, Date timestamp, boolean active, User user, String title, String text, int likeCount, int dislikeCount, int viewCount, List<Comment> comments, List<String> tags) {
+    public PostByIdResponse(int id, long timestamp, boolean active, User user, String title, String text, int likeCount, int dislikeCount, int viewCount, List<Comment> comments, List<String> tags) {
         this.id = id;
         this.timestamp = timestamp;
         this.active = active;
@@ -39,11 +39,11 @@ public class PostByIdResponse {
         this.id = id;
     }
 
-    public Date getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 

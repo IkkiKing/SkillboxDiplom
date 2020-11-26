@@ -3,9 +3,8 @@ package com.ikkiking.service;
 import com.ikkiking.api.response.PostResponse.*;
 
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+
+import java.util.*;
 
 @Service
 public class PostService {
@@ -50,11 +49,15 @@ public class PostService {
 
         User user = new User(1, "Вася Петров");
 
-        Date now = new Date();
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        calendar.clear();
+        calendar.set(2020, Calendar.NOVEMBER, 26);
+        long date = calendar.getTimeInMillis() / 1000L;
+
 
         CommentUser commentUser = new CommentUser(1, "Вася Петров", "unknowImage.jpg");
 
-        Comment comment = new Comment(1, now, "SomeTextCOmment", commentUser);
+        Comment comment = new Comment(1, date, "SomeTextCOmment", commentUser);
 
         List<Comment> commenttList = new ArrayList<>();
 
@@ -64,7 +67,7 @@ public class PostService {
         tagList.add(new String("Java"));
         tagList.add(new String("Hadoop"));
 
-        PostByIdResponse postByIdResponse = new PostByIdResponse(1, now,
+        PostByIdResponse postByIdResponse = new PostByIdResponse(1, date,
                 true,
                 user,
                 "Приветсвенный пост",
@@ -82,10 +85,13 @@ public class PostService {
     private static void createFakeResponse(PostResponse postResponse){
         postResponse.setCount(5);
 
-        Date now = new Date();
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        calendar.clear();
+        calendar.set(2020, Calendar.NOVEMBER, 26);
+        long date = calendar.getTimeInMillis() / 1000L;
 
         Post post = new Post(1,
-                now,
+                date,
                 new User(1,
                         "Вася Петров"),
                 "Приветсвенный пост",
