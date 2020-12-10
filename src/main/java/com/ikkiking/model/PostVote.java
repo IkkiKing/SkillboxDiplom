@@ -9,7 +9,7 @@ public class PostVote {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private long id;
 
     @NotNull(message = "post_votes.user_id may not be null")
     @ManyToOne(cascade = CascadeType.ALL)
@@ -17,6 +17,7 @@ public class PostVote {
 
     @NotNull(message = "post_votes.post_id may not be null")
     @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "post_id")
     private Post post;
 
     @NotNull(message = "post_votes.time may not be null")
@@ -25,11 +26,11 @@ public class PostVote {
     @NotNull(message = "post_votes.value may not be null")
     private boolean value;
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

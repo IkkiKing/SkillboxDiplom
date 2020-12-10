@@ -1,12 +1,8 @@
 package com.ikkiking.api.response.PostResponse;
 
-
-import java.util.Date;
-
-
 public class Post {
 
-    private Integer id;
+    private long id;
 
     private long timestamp;
 
@@ -24,7 +20,7 @@ public class Post {
 
     private Integer viewCount;
 
-    public Post(Integer id, long timestamp, User user, String title, String announce, Integer likeCount, Integer dislikeCount, Integer commentCount, Integer viewCount) {
+    public Post(long id, long timestamp, User user, String title, String announce, Integer likeCount, Integer dislikeCount, Integer commentCount, Integer viewCount) {
         this.id = id;
         this.timestamp = timestamp;
         this.user = user;
@@ -36,7 +32,7 @@ public class Post {
         this.viewCount = viewCount;
     }
 
-    public Integer getId() {
+    public long getId() {
         return id;
     }
 
