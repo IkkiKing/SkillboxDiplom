@@ -47,8 +47,8 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/tag")
-    private TagResponse getTags(@RequestParam(name = "query", required = false) List<Tag> tags){
-        return tagService.getTagService(tags);
+    private TagResponse getTags(@RequestParam(name = "query", required = false) String query){
+        return tagService.getTagService(query);
     }
 
     @GetMapping("/calendar")

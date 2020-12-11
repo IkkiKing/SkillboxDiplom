@@ -127,13 +127,30 @@ public class PostService {
 
     public PostByDateResponse getPostsByDate(int limit, int offset, String date) {
         PostByDateResponse postResponse = new PostByDateResponse();
-        createFakeResponse(postResponse);
+
+        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+
+        Page<com.ikkiking.model.Post> postPage = postRepository.findAllByDate(sortedByMode, date);
+
+        List<Post> listPosts = getPost(postVoteRepository, postCommentsRepository, postPage);
+
+        postResponse.setCount(postPage.getTotalElements());
+        postResponse.setPosts(listPosts);
         return postResponse;
     }
 
     public PostByTagResponse getPostsByTag(int limit, int offset, String tag) {
         PostByTagResponse postResponse = new PostByTagResponse();
-        createFakeResponse(postResponse);
+        System.out.println(tag);
+        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+
+        Page<com.ikkiking.model.Post> postPage = postRepository.findAllByTag(sortedByMode, tag);
+
+        List<Post> listPosts = getPost(postVoteRepository, postCommentsRepository, postPage);
+
+        postResponse.setCount(postPage.getTotalElements());
+        postResponse.setPosts(listPosts);
+
         return postResponse;
     }
 
