@@ -2,7 +2,6 @@ package com.ikkiking.model;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
 import java.util.Date;
 
 @Entity(name = "users")
@@ -30,7 +29,7 @@ public class User {
 
     private String code;
 
-    private String text;
+    private String photo;
 
     /*@OneToMany(mappedBy = "user_id", fetch = FetchType.LAZY)
     private Collection<Post> posts;
@@ -99,11 +98,11 @@ public class User {
     }
 
     public String getText() {
-        return text;
+        return photo;
     }
 
-    public void setText(String text) {
-        this.text = text;
+    public void setText(String photo) {
+        this.photo = photo;
     }
 
     /*public Collection<Post> getPosts() {

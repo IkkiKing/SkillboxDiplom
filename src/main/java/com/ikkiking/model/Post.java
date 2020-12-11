@@ -2,7 +2,6 @@ package com.ikkiking.model;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -19,7 +18,7 @@ public class Post {
 
     @NotNull(message = "posts.moderation_status may not be null")
     @Column(name = "moderation_status")
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private ModerationStatus moderationStatus = ModerationStatus.NEW;
 
     @ManyToOne(cascade = CascadeType.ALL)
@@ -47,15 +46,10 @@ public class Post {
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "tag2post",
             joinColumns = {@JoinColumn(name = "post_id")},
-            inverseJoinColumns = {@JoinColumn(name = "student_id")}
+            inverseJoinColumns = {@JoinColumn(name = "tag_id")}
     )
     private List<Tag> tags;
 
-    /*@OneToMany(mappedBy = "post_id", fetch = FetchType.LAZY)
-    private Collection<PostComments> postComments;
-
-    @OneToMany(mappedBy = "post_id", fetch = FetchType.LAZY)
-    private Collection<PostVote> postVotes;*/
 
     public int getId() {
         return id;

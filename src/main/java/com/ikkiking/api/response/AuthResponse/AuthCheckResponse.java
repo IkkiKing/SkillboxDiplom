@@ -1,10 +1,10 @@
-package com.ikkiking.api.response.CheckResponse;
+package com.ikkiking.api.response.AuthResponse;
 
 public class AuthCheckResponse {
     private boolean result;
-    private User user;
+    private AuthUser user;
 
-    public AuthCheckResponse(boolean result, User user) {
+    public AuthCheckResponse(boolean result, AuthUser user) {
         this.result = result;
         this.user = user;
     }
@@ -17,11 +17,11 @@ public class AuthCheckResponse {
         this.result = result;
     }
 
-    public User getUser() {
+    public AuthUser getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(AuthUser user) {
         this.user = user;
     }
 }

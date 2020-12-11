@@ -1,6 +1,6 @@
-package com.ikkiking.api.response.CheckResponse;
+package com.ikkiking.api.response.AuthResponse;
 
-public class User {
+public class AuthUser {
     private Integer id;
     private String name;
     private String photo;
@@ -9,7 +9,7 @@ public class User {
     private Integer moderationCount;
     private boolean settings;
 
-    public User(Integer id, String name, String photo, String email, boolean moderation, Integer moderationCount, boolean settings) {
+    public AuthUser(Integer id, String name, String photo, String email, boolean moderation, Integer moderationCount, boolean settings) {
         this.id = id;
         this.name = name;
         this.photo = photo;

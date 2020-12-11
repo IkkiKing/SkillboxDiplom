@@ -4,11 +4,11 @@ import java.util.Date;
 
 public class Comment {
     private Integer id;
-    private Date timestamp;
+    private long timestamp;
     private String text;
     private CommentUser user;
 
-    public Comment(Integer id, Date timestamp, String text, CommentUser user) {
+    public Comment(Integer id, long timestamp, String text, CommentUser user) {
         this.id = id;
         this.timestamp = timestamp;
         this.text = text;
@@ -23,11 +23,11 @@ public class Comment {
         this.id = id;
     }
 
-    public Date getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 
