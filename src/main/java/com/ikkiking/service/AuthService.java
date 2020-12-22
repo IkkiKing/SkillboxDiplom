@@ -10,12 +10,12 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     public AuthCheckResponse check(){
-        AuthUser user = new AuthUser(1,
+        AuthUser user = new AuthUser(Long.valueOf(1),
                     "Вася Петров",
                     "unknown.jpg",
                 "VasyaPetrog@gmail.com",
                 true,
-                1,
+                (long) 1,
                 true
                 );
 

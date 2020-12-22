@@ -9,10 +9,10 @@ public class PostComments {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Long id;
 
     @Column(name = "parent_id")
-    private int parent_id;
+    private Long parent_id;
 
     @NotNull(message = "post_comments.post_id may not be null")
     @JoinColumn(name = "post_id")
@@ -30,19 +30,20 @@ public class PostComments {
     @NotNull(message = "post_comments.text may not be null")
     private String text;
 
-    public int getId() {
+
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public int getParent_id() {
+    public Long getParent_id() {
         return parent_id;
     }
 
-    public void setParent_id(int parent_id) {
+    public void setParent_id(Long parent_id) {
         this.parent_id = parent_id;
     }
 

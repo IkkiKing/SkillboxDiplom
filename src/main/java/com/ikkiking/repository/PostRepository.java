@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -37,4 +40,18 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "and EXISTS(SELECT 1 FROM tag2Post tp, tags t where tp.post_id = p.id and tp.tag_id = t.id and t.name = :tag)",
             nativeQuery = true)
     Page<Post> findAllByTag(Pageable pageable, String tag);
+
+
+    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = upper(:status))",
+            nativeQuery = true)
+    Page<Post> findAllForModeration(Pageable pageable, String status);
+
+    @Query(value = "select YEAR(p.time) as year, DATE_FORMAT(DATE(p.time), '%Y-%m-%d') as date, count(*) as amount from posts p " +
+            "where YEAR(p.time) = :year and p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate()  " +
+            "group by year, date order by date",
+            nativeQuery = true)
+    List<CalendarCustom> findPostDates(int year);
+
+    @Override
+    Optional<Post> findById(Long id);
 }

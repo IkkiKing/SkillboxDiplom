@@ -1,10 +1,9 @@
 package com.ikkiking.service;
 
 import com.ikkiking.api.response.PostResponse.*;
-
-import com.ikkiking.repository.PostCommentsRepository;
-import com.ikkiking.repository.PostRepository;
-import com.ikkiking.repository.PostVoteRepository;
+import com.ikkiking.model.PostComments;
+import com.ikkiking.model.Tag;
+import com.ikkiking.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +21,8 @@ public class PostService {
     private PostVoteRepository postVoteRepository;
     @Autowired
     private PostCommentsRepository postCommentsRepository;
+    @Autowired
+    private TagRepository tagRepository;
 
 
     private static Page<com.ikkiking.model.Post> getPostFromDb(PostRepository postRepository,
@@ -66,12 +67,12 @@ public class PostService {
         postPage.get().forEach(t -> {
 
             long postId = t.getId();
-            int viewCount = t.getViewCount();
+            long viewCount = t.getViewCount();
             long timestamp = t.getTime().getTime() / 1000L;
 
-            int likesCount = postVoteRepository.countLikesByPost(t);
-            int dislikesCount = postVoteRepository.countDislikesByPost(t);
-            int commentCount = postCommentsRepository.countCommentsByPost(t);
+            long likesCount = postVoteRepository.countLikesByPost(t);
+            long dislikesCount = postVoteRepository.countDislikesByPost(t);
+            long commentCount = postCommentsRepository.countCommentsByPost(t);
 
 
             String title = t.getTitle();
@@ -109,7 +110,6 @@ public class PostService {
     }
 
 
-
     public SearchPostResponse searchPosts(int limit, int offset, String query) {
         SearchPostResponse postResponse = new SearchPostResponse();
 
@@ -141,7 +141,7 @@ public class PostService {
 
     public PostByTagResponse getPostsByTag(int limit, int offset, String tag) {
         PostByTagResponse postResponse = new PostByTagResponse();
-        System.out.println(tag);
+
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
         Page<com.ikkiking.model.Post> postPage = postRepository.findAllByTag(sortedByMode, tag);
@@ -156,55 +156,94 @@ public class PostService {
 
     public PostForModerationResponse getPostsForModeration(int limit, int offset, String status) {
         PostForModerationResponse postResponse = new PostForModerationResponse();
-        createFakeResponse(postResponse);
+
+        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+
+        Page<com.ikkiking.model.Post> postPage = postRepository.findAllForModeration(sortedByMode, status);
+
+        List<Post> listPosts = getPost(postVoteRepository, postCommentsRepository, postPage);
+
+        postResponse.setCount(postPage.getTotalElements());
+        postResponse.setPosts(listPosts);
+
         return postResponse;
     }
 
-    public MyPostResponse getMyPosts(int limit, int offset,  String status) {
+    public MyPostResponse getMyPosts(int limit, int offset, String status) {
         MyPostResponse postResponse = new MyPostResponse();
         createFakeResponse(postResponse);
         return postResponse;
     }
 
-    public PostByIdResponse getPostByid(int id) {
+    public PostByIdResponse getPostByid(long id) {
+        PostByIdResponse postByIdResponse = null;
 
-        User user = new User(1, "Вася Петров");
+        Optional<com.ikkiking.model.Post> postOptional = postRepository.findById(id);
 
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        calendar.clear();
-        calendar.set(2020, Calendar.NOVEMBER, 26);
-        long date = calendar.getTimeInMillis() / 1000L;
+        if (postOptional.isPresent()) {
+            com.ikkiking.model.Post post = postOptional.get();
+
+            Long postId = post.getId();
+            long timestamp = post.getTime().getTime() / 1000L;
+            boolean isActive = post.isActive();
 
 
-        CommentUser commentUser = new CommentUser(1, "Вася Петров", "unknowImage.jpg");
+            User user = new User(post.getUser().getId(), post.getUser().getName());
+            String title = post.getTitle();
+            String text = post.getText();
+            long likesCount = postVoteRepository.countLikesByPost(post);
+            long dislikesCount = postVoteRepository.countDislikesByPost(post);
+            long viewCount = post.getViewCount();
 
-        Comment comment = new Comment(1, date, "SomeTextCOmment", commentUser);
 
-        List<Comment> commenttList = new ArrayList<>();
+            List<PostComments> postCommentsList = postCommentsRepository.findAllByIPostId(postId);
+            List<Comment> commentList = new ArrayList<>();
 
-        commenttList.add(comment);
 
-        List<String> tagList = new ArrayList<>();
-        tagList.add(new String("Java"));
-        tagList.add(new String("Hadoop"));
+            postCommentsList.forEach(a -> {
 
-        PostByIdResponse postByIdResponse = new PostByIdResponse(1, date,
-                true,
-                user,
-                "Приветсвенный пост",
-                "Привет всем, на нашем уютном форуме",
-                1,
-                2,
-                4,
-                commenttList,
-                tagList
-        );
+                CommentUser commentUser = new CommentUser(a.getUser().getId(),
+                        a.getUser().getName(),
+                        a.getUser().getPhoto());
+
+                Comment comment = new Comment(a.getId(),
+                        a.getTime().getTime() / 1000L,
+                        a.getText(),
+                        commentUser);
+
+                commentList.add(comment);
+            });
+
+            List<Tag> tagList = tagRepository.findAllByPost(postId);
+
+            Set<String> tagStrList = new HashSet<>();
+
+            if (tagList != null){
+                tagList.forEach(a-> {
+                    tagStrList.add(a.getName());
+                });
+
+            }
+
+            postByIdResponse = new PostByIdResponse(post.getId(),
+                    post.getTime().getTime() / 1000L,
+                    post.isActive(),
+                    user,
+                    title,
+                    text,
+                    likesCount,
+                    dislikesCount,
+                    viewCount,
+                    commentList,
+                    tagStrList
+                    );
+        }
 
         return postByIdResponse;
     }
 
     private static void createFakeResponse(PostResponse postResponse) {
-        postResponse.setCount(5);
+        /*postResponse.setCount(5);
 
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         calendar.clear();
@@ -226,7 +265,7 @@ public class PostService {
         List<Post> listPosts = new ArrayList<>();
         listPosts.add(post);
 
-        postResponse.setPosts(listPosts);
+        postResponse.setPosts(listPosts);*/
     }
 
 

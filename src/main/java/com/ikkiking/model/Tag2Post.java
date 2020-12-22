@@ -8,14 +8,14 @@ public class Tag2Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Long id;
 
     @NotNull(message = "tag2post.post_id may not be null")
     @Column(name = "post_id")
-    private int postId;
+    private Long postId;
 
 
     @NotNull(message = "tag2post.tag_id may not be null")
     @Column(name = "tag_id")
-    private int tagId;
+    private Long tagId;
 }

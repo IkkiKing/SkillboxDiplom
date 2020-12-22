@@ -1,21 +1,21 @@
 package com.ikkiking.api.response.PostResponse;
 
 public class CommentUser {
-    private Integer id;
+    private Long id;
     private String name;
     private String photo;
 
-    public CommentUser(Integer id, String name, String photo) {
+    public CommentUser(Long id, String name, String photo) {
         this.id = id;
         this.name = name;
         this.photo = photo;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

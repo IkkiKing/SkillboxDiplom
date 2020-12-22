@@ -2,9 +2,9 @@ package com.ikkiking.api.response.PostResponse;
 
 public class Post {
 
-    private long id;
+    private Long id;
 
-    private long timestamp;
+    private Long timestamp;
 
     private User user;
 
@@ -12,15 +12,15 @@ public class Post {
 
     private String announce;
 
-    private Integer likeCount;
+    private Long likeCount;
 
-    private Integer dislikeCount;
+    private Long dislikeCount;
 
-    private Integer commentCount;
+    private Long commentCount;
 
-    private Integer viewCount;
+    private Long viewCount;
 
-    public Post(long id, long timestamp, User user, String title, String announce, Integer likeCount, Integer dislikeCount, Integer commentCount, Integer viewCount) {
+    public Post(Long id, Long timestamp, User user, String title, String announce, Long likeCount, Long dislikeCount, Long commentCount, Long viewCount) {
         this.id = id;
         this.timestamp = timestamp;
         this.user = user;
@@ -32,19 +32,19 @@ public class Post {
         this.viewCount = viewCount;
     }
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public long getTimestamp() {
+    public Long getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
+    public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
     }
 
@@ -72,35 +72,35 @@ public class Post {
         this.announce = announce;
     }
 
-    public Integer getLikeCount() {
+    public Long getLikeCount() {
         return likeCount;
     }
 
-    public void setLikeCount(Integer likeCount) {
+    public void setLikeCount(Long likeCount) {
         this.likeCount = likeCount;
     }
 
-    public Integer getDislikeCount() {
+    public Long getDislikeCount() {
         return dislikeCount;
     }
 
-    public void setDislikeCount(Integer dislikeCount) {
+    public void setDislikeCount(Long dislikeCount) {
         this.dislikeCount = dislikeCount;
     }
 
-    public Integer getCommentCount() {
+    public Long getCommentCount() {
         return commentCount;
     }
 
-    public void setCommentCount(Integer commentCount) {
+    public void setCommentCount(Long commentCount) {
         this.commentCount = commentCount;
     }
 
-    public Integer getViewCount() {
+    public Long getViewCount() {
         return viewCount;
     }
 
-    public void setViewCount(Integer viewCount) {
+    public void setViewCount(Long viewCount) {
         this.viewCount = viewCount;
     }
 }

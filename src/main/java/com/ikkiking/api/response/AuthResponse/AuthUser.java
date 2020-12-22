@@ -1,15 +1,15 @@
 package com.ikkiking.api.response.AuthResponse;
 
 public class AuthUser {
-    private Integer id;
+    private Long id;
     private String name;
     private String photo;
     private String email;
     private boolean moderation;
-    private Integer moderationCount;
+    private Long moderationCount;
     private boolean settings;
 
-    public AuthUser(Integer id, String name, String photo, String email, boolean moderation, Integer moderationCount, boolean settings) {
+    public AuthUser(Long id, String name, String photo, String email, boolean moderation, Long moderationCount, boolean settings) {
         this.id = id;
         this.name = name;
         this.photo = photo;
@@ -19,11 +19,11 @@ public class AuthUser {
         this.settings = settings;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -59,11 +59,11 @@ public class AuthUser {
         this.moderation = moderation;
     }
 
-    public Integer getModerationCount() {
+    public Long getModerationCount() {
         return moderationCount;
     }
 
-    public void setModerationCount(Integer moderationCount) {
+    public void setModerationCount(Long moderationCount) {
         this.moderationCount = moderationCount;
     }
 

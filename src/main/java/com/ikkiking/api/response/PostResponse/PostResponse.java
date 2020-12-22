@@ -4,14 +4,14 @@ package com.ikkiking.api.response.PostResponse;
 import java.util.List;
 
 public class PostResponse {
-    private long count;
+    private Long count;
     private List<Post> posts;
 
-    public long getCount() {
+    public Long getCount() {
         return count;
     }
 
-    public void setCount(long count) {
+    public void setCount(Long count) {
         this.count = count;
     }
 

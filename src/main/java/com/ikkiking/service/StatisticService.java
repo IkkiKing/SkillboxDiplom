@@ -13,6 +13,7 @@ public class StatisticService {
     }
 
     public AllStatisticResponse getAllStatistic(){
+
         return new AllStatisticResponse(10, 5, 2, 11, 1590217200);
     }
 

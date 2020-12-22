@@ -1,13 +1,13 @@
 package com.ikkiking.api.response.StatisticResponse;
 
 public class StatisticResponse {
-    private int postsCount;
-    private int likesCount;
-    private int dislikesCount;
-    private int viewsCount;
+    private long postsCount;
+    private long likesCount;
+    private long dislikesCount;
+    private long viewsCount;
     private long firstPublication;
 
-    public StatisticResponse(int postsCount, int likesCount, int dislikesCount, int viewsCount, long firstPublication) {
+    public StatisticResponse(long postsCount, long likesCount, long dislikesCount, long viewsCount, long firstPublication) {
         this.postsCount = postsCount;
         this.likesCount = likesCount;
         this.dislikesCount = dislikesCount;
@@ -15,35 +15,35 @@ public class StatisticResponse {
         this.firstPublication = firstPublication;
     }
 
-    public int getPostsCount() {
+    public long getPostsCount() {
         return postsCount;
     }
 
-    public void setPostsCount(int postsCount) {
+    public void setPostsCount(long postsCount) {
         this.postsCount = postsCount;
     }
 
-    public int getLikesCount() {
+    public long getLikesCount() {
         return likesCount;
     }
 
-    public void setLikesCount(int likesCount) {
+    public void setLikesCount(long likesCount) {
         this.likesCount = likesCount;
     }
 
-    public int getIntdislikesCount() {
+    public long getDislikesCount() {
         return dislikesCount;
     }
 
-    public void setIntdislikesCount(int dislikesCount) {
+    public void setDislikesCount(long dislikesCount) {
         this.dislikesCount = dislikesCount;
     }
 
-    public int getViewsCount() {
+    public long getViewsCount() {
         return viewsCount;
     }
 
-    public void setViewsCount(int viewsCount) {
+    public void setViewsCount(long viewsCount) {
         this.viewsCount = viewsCount;
     }
 

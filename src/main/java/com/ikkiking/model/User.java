@@ -8,7 +8,7 @@ import java.util.Date;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Long id;
 
     @NotNull(message = "users.is_moderator may not be null")
     @Column(name = "is_moderator")
@@ -31,21 +31,12 @@ public class User {
 
     private String photo;
 
-    /*@OneToMany(mappedBy = "user_id", fetch = FetchType.LAZY)
-    private Collection<Post> posts;
 
-    @OneToMany(mappedBy = "user_id", fetch = FetchType.LAZY)
-    private Collection<PostComments> postComments;
-
-    @OneToMany(mappedBy = "user_id", fetch = FetchType.LAZY)
-    private Collection<PostVote> postVotes;*/
-
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -97,35 +88,11 @@ public class User {
         this.code = code;
     }
 
-    public String getText() {
+    public String getPhoto() {
         return photo;
     }
 
-    public void setText(String photo) {
+    public void setPhoto(String photo) {
         this.photo = photo;
     }
-
-    /*public Collection<Post> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(Collection<Post> posts) {
-        this.posts = posts;
-    }
-
-    public Collection<PostComments> getPostComments() {
-        return postComments;
-    }
-
-    public void setPostComments(Collection<PostComments> postComments) {
-        this.postComments = postComments;
-    }
-
-    public Collection<PostVote> getPostVotes() {
-        return postVotes;
-    }
-
-    public void setPostVotes(Collection<PostVote> postVotes) {
-        this.postVotes = postVotes;
-    }*/
 }

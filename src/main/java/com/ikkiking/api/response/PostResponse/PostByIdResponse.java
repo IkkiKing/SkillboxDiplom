@@ -3,21 +3,24 @@ package com.ikkiking.api.response.PostResponse;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 public class PostByIdResponse {
-    private Integer id;
+    private Long id;
     private long timestamp;
     private boolean active;
     private User user;
     private String title;
     private String text;
-    private Integer likeCount;
-    private Integer dislikeCount;
-    private Integer viewCount;
+    private Long likeCount;
+    private Long dislikeCount;
+    private Long viewCount;
     private List<Comment> comments;
-    private List<String> tags;
+    private Set<String> tags;
 
-    public PostByIdResponse(int id, long timestamp, boolean active, User user, String title, String text, int likeCount, int dislikeCount, int viewCount, List<Comment> comments, List<String> tags) {
+
+
+    public PostByIdResponse(Long id, long timestamp, boolean active, User user, String title, String text, Long likeCount, Long dislikeCount, Long viewCount, List<Comment> comments, Set<String> tags) {
         this.id = id;
         this.timestamp = timestamp;
         this.active = active;
@@ -31,11 +34,11 @@ public class PostByIdResponse {
         this.tags = tags;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -79,27 +82,27 @@ public class PostByIdResponse {
         this.text = text;
     }
 
-    public int getLikeCount() {
+    public Long getLikeCount() {
         return likeCount;
     }
 
-    public void setLikeCount(int likeCount) {
+    public void setLikeCount(Long likeCount) {
         this.likeCount = likeCount;
     }
 
-    public int getDislikeCount() {
+    public Long getDislikeCount() {
         return dislikeCount;
     }
 
-    public void setDislikeCount(int dislikeCount) {
+    public void setDislikeCount(Long dislikeCount) {
         this.dislikeCount = dislikeCount;
     }
 
-    public int getViewCount() {
+    public Long getViewCount() {
         return viewCount;
     }
 
-    public void setViewCount(int viewCount) {
+    public void setViewCount(Long viewCount) {
         this.viewCount = viewCount;
     }
 
@@ -111,11 +114,11 @@ public class PostByIdResponse {
         this.comments = comments;
     }
 
-    public List<String> getTags() {
+    public Set<String> getTags() {
         return tags;
     }
 
-    public void setTags(List<String> tags) {
+    public void setTags(Set<String> tags) {
         this.tags = tags;
     }
 }

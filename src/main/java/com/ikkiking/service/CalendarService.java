@@ -1,12 +1,21 @@
 package com.ikkiking.service;
 
 import com.ikkiking.api.response.CalendarResponse;
+import com.ikkiking.model.Post;
+import com.ikkiking.repository.CalendarCustom;
+import com.ikkiking.repository.PostRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+
+
 @Service
 public class CalendarService {
+
+    @Autowired
+    private PostRepository postRepository;
 
     public CalendarResponse getCalendar(int year){
 
@@ -14,21 +23,17 @@ public class CalendarService {
             year = Calendar.getInstance(TimeZone.getTimeZone("UTC")).get(Calendar.YEAR);
         }
 
-        List<Integer> years = new ArrayList<>();
-        Map<String, Integer> posts = new HashMap<>();
+        List<CalendarCustom> posts = postRepository.findPostDates(year);
 
-        years.add(2017);
-        years.add(2018);
-        years.add(2019);
-        years.add(2020);
+        Set<Integer> years = new HashSet<>();
+        Map<String, Long> postsMap = new HashMap<>();
 
-        posts.put("2019-12-17", 56);
-        posts.put("2019-12-14", 11);
-        posts.put("2019-06-17", 1);
-        posts.put("2020-03-12", 6);
+        posts.forEach(t->{
+            years.add(t.getYear());
+            postsMap.put(t.getDate(), t.getAmount());
+        });
 
-        CalendarResponse calendarResponse = new CalendarResponse(years, posts);
-
+        CalendarResponse calendarResponse = new CalendarResponse(years, postsMap);
         return calendarResponse;
     }
 

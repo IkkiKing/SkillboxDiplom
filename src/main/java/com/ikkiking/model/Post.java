@@ -10,7 +10,7 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Long id;
 
     @NotNull(message = "posts.is_active may not be null")
     @Column(name = "is_active")
@@ -41,7 +41,7 @@ public class Post {
 
     @NotNull(message = "posts.view_count may not be null")
     @Column(name = "view_count")
-    private int viewCount;
+    private Long viewCount;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "tag2post",
@@ -51,11 +51,11 @@ public class Post {
     private List<Tag> tags;
 
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -115,11 +115,11 @@ public class Post {
         this.text = text;
     }
 
-    public int getViewCount() {
+    public Long getViewCount() {
         return viewCount;
     }
 
-    public void setViewCount(int viewCount) {
+    public void setViewCount(Long viewCount) {
         this.viewCount = viewCount;
     }
 

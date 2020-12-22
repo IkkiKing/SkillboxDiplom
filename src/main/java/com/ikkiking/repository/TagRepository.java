@@ -22,5 +22,9 @@ public interface TagRepository extends CrudRepository<Tag, Integer> {
     nativeQuery = true)
     List<TagCustom> findAllByTags(String query);
 
+    @Query(value = "select t.* from tags t, tag2post t2p where t.id = t2p.tag_id and t2p.post_id = :postId",
+            nativeQuery = true)
+    List<Tag> findAllByPost(Long postId);
+
 
 }

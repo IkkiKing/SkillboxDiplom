@@ -2,29 +2,30 @@ package com.ikkiking.api.response;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CalendarResponse {
-    private List<Integer> years;
-    private Map<String, Integer> posts;
+    private Set<Integer> years;
+    private Map<String, Long> posts;
 
-    public CalendarResponse(List<Integer> years, Map<String, Integer> posts) {
+    public CalendarResponse(Set<Integer> years, Map<String, Long> posts) {
         this.years = years;
         this.posts = posts;
     }
 
-    public List<Integer> getYears() {
+    public Set<Integer> getYears() {
         return years;
     }
 
-    public void setYears(List<Integer> years) {
+    public void setYears(Set<Integer> years) {
         this.years = years;
     }
 
-    public Map<String, Integer> getPosts() {
+    public Map<String, Long> getPosts() {
         return posts;
     }
 
-    public void setPosts(Map<String, Integer> posts) {
+    public void setPosts(Map<String, Long> posts) {
         this.posts = posts;
     }
 }
