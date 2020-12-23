@@ -10,16 +10,15 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 
-
 @Service
 public class CalendarService {
 
     @Autowired
     private PostRepository postRepository;
 
-    public CalendarResponse getCalendar(int year){
+    public CalendarResponse getCalendar(int year) {
 
-        if (year == 0){
+        if (year == 0) {
             year = Calendar.getInstance(TimeZone.getTimeZone("UTC")).get(Calendar.YEAR);
         }
 
@@ -28,10 +27,12 @@ public class CalendarService {
         Set<Integer> years = new HashSet<>();
         Map<String, Long> postsMap = new HashMap<>();
 
-        posts.forEach(t->{
-            years.add(t.getYear());
-            postsMap.put(t.getDate(), t.getAmount());
-        });
+        if (posts != null) {
+            posts.forEach(t -> {
+                years.add(t.getYear());
+                postsMap.put(t.getDate(), t.getAmount());
+            });
+        }
 
         CalendarResponse calendarResponse = new CalendarResponse(years, postsMap);
         return calendarResponse;

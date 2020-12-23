@@ -17,14 +17,16 @@ public class TagService {
     @Autowired
     private TagRepository tagRepository;
 
-    public TagResponse getTagService(String query){
+    public TagResponse getTag(String query) {
         List<Tag> tagList = new ArrayList<>();
 
         List<TagCustom> tagsResp = tagRepository.findAllByTags(query);
-        tagsResp.forEach(tagCustom -> {
-            System.out.println(tagCustom.getWeight());
-            tagList.add(new Tag(tagCustom.getName(), tagCustom.getWeight()));
-        });
+        if (tagsResp != null) {
+            tagsResp.forEach(tagCustom -> {
+                System.out.println(tagCustom.getWeight());
+                tagList.add(new Tag(tagCustom.getName(), tagCustom.getWeight()));
+            });
+        }
         TagResponse tagResponse = new TagResponse(tagList);
         return tagResponse;
     }

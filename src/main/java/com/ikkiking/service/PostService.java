@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 @Service
@@ -59,112 +60,111 @@ public class PostService {
         return posts;
     }
 
-    private static List<Post> getPost(PostVoteRepository postVoteRepository,
-                                      PostCommentsRepository postCommentsRepository,
-                                      Page<com.ikkiking.model.Post> postPage) {
+
+    private static void enrichPost(PostVoteRepository postVoteRepository,
+                                   PostCommentsRepository postCommentsRepository,
+                                   Page<com.ikkiking.model.Post> postPage,
+                                   @NotNull PostResponse postResponse) {
 
         List<Post> listPosts = new ArrayList<>();
-        postPage.get().forEach(t -> {
+        long elementsCount = 0;
 
-            long postId = t.getId();
-            long viewCount = t.getViewCount();
-            long timestamp = t.getTime().getTime() / 1000L;
+        //Нужна ли проверка на null? Судя по всему обращение в бд, даже если ничего не находится
+        //Инициализирует коллекцию
+        if (postPage != null) {
+            elementsCount = postPage.getTotalElements();
+            postPage.get().forEach(t -> {
 
-            long likesCount = postVoteRepository.countLikesByPost(t);
-            long dislikesCount = postVoteRepository.countDislikesByPost(t);
-            long commentCount = postCommentsRepository.countCommentsByPost(t);
+                long postId = t.getId();
+                long viewCount = t.getViewCount();
+                long timestamp = t.getTime().getTime() / 1000L;
 
+                long likesCount = postVoteRepository.countLikesByPost(t);
+                long dislikesCount = postVoteRepository.countDislikesByPost(t);
+                long commentCount = postCommentsRepository.countCommentsByPost(t);
 
-            String title = t.getTitle();
-            String text = t.getText();
+                String title = t.getTitle();
+                String text = t.getText();
 
-            User user = new User(t.getUser().getId(), t.getUser().getName());
+                User user = new User(t.getUser().getId(), t.getUser().getName());
 
-            listPosts.add(new Post(postId,
-                    timestamp,
-                    user,
-                    title,
-                    text,
-                    likesCount,
-                    dislikesCount,
-                    commentCount,
-                    viewCount)
-            );
-        });
-
-        return listPosts;
+                listPosts.add(new Post(postId,
+                        timestamp,
+                        user,
+                        title,
+                        text,
+                        likesCount,
+                        dislikesCount,
+                        commentCount,
+                        viewCount)
+                );
+            });
+        }
+        postResponse.setCount(elementsCount);
+        postResponse.setPosts(listPosts);
     }
 
     public GetPostResponse getPosts(int limit, int offset, String mode) {
 
-        GetPostResponse postResponse = new GetPostResponse();
-
         Page<com.ikkiking.model.Post> postPage = getPostFromDb(postRepository, limit, offset, mode);
 
-        List<Post> listPosts = getPost(postVoteRepository, postCommentsRepository, postPage);
+        GetPostResponse postResponse = new GetPostResponse();
 
-        postResponse.setCount(postPage.getTotalElements());
-        postResponse.setPosts(listPosts);
+        enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
         return postResponse;
     }
 
 
     public SearchPostResponse searchPosts(int limit, int offset, String query) {
-        SearchPostResponse postResponse = new SearchPostResponse();
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
         Page<com.ikkiking.model.Post> postPage = postRepository.findAllBySearch(sortedByMode, query);
 
-        List<Post> listPosts = getPost(postVoteRepository, postCommentsRepository, postPage);
+        SearchPostResponse postResponse = new SearchPostResponse();
 
-        postResponse.setCount(postPage.getTotalElements());
-        postResponse.setPosts(listPosts);
+        enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
         return postResponse;
     }
 
     public PostByDateResponse getPostsByDate(int limit, int offset, String date) {
-        PostByDateResponse postResponse = new PostByDateResponse();
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
         Page<com.ikkiking.model.Post> postPage = postRepository.findAllByDate(sortedByMode, date);
 
-        List<Post> listPosts = getPost(postVoteRepository, postCommentsRepository, postPage);
+        PostByDateResponse postResponse = new PostByDateResponse();
 
-        postResponse.setCount(postPage.getTotalElements());
-        postResponse.setPosts(listPosts);
+        enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
+
         return postResponse;
     }
 
     public PostByTagResponse getPostsByTag(int limit, int offset, String tag) {
-        PostByTagResponse postResponse = new PostByTagResponse();
+
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
         Page<com.ikkiking.model.Post> postPage = postRepository.findAllByTag(sortedByMode, tag);
 
-        List<Post> listPosts = getPost(postVoteRepository, postCommentsRepository, postPage);
+        PostByTagResponse postResponse = new PostByTagResponse();
 
-        postResponse.setCount(postPage.getTotalElements());
-        postResponse.setPosts(listPosts);
+        enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
         return postResponse;
     }
 
     public PostForModerationResponse getPostsForModeration(int limit, int offset, String status) {
-        PostForModerationResponse postResponse = new PostForModerationResponse();
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
         Page<com.ikkiking.model.Post> postPage = postRepository.findAllForModeration(sortedByMode, status);
 
-        List<Post> listPosts = getPost(postVoteRepository, postCommentsRepository, postPage);
+        PostForModerationResponse postResponse = new PostForModerationResponse();
 
-        postResponse.setCount(postPage.getTotalElements());
-        postResponse.setPosts(listPosts);
+        enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
         return postResponse;
     }
@@ -183,8 +183,8 @@ public class PostService {
         if (postOptional.isPresent()) {
             com.ikkiking.model.Post post = postOptional.get();
 
-            Long postId = post.getId();
-            long timestamp = post.getTime().getTime() / 1000L;
+            Long postId      = post.getId();
+            long timestamp   = post.getTime().getTime() / 1000L;
             boolean isActive = post.isActive();
 
 
@@ -198,7 +198,6 @@ public class PostService {
 
             List<PostComments> postCommentsList = postCommentsRepository.findAllByIPostId(postId);
             List<Comment> commentList = new ArrayList<>();
-
 
             postCommentsList.forEach(a -> {
 
@@ -218,8 +217,9 @@ public class PostService {
 
             Set<String> tagStrList = new HashSet<>();
 
-            if (tagList != null){
-                tagList.forEach(a-> {
+            //Тот же самый вопрос, нужна ли действительно проверка на null?
+            if (tagList != null) {
+                tagList.forEach(a -> {
                     tagStrList.add(a.getName());
                 });
 
@@ -236,7 +236,7 @@ public class PostService {
                     viewCount,
                     commentList,
                     tagStrList
-                    );
+            );
         }
 
         return postByIdResponse;
