@@ -5,7 +5,7 @@ import java.util.List;
 
 public class PostResponse {
     private Long count;
-    private List<Post> posts;
+    private List<PostForResponse> posts;
 
     public Long getCount() {
         return count;
@@ -15,11 +15,11 @@ public class PostResponse {
         this.count = count;
     }
 
-    public List<Post> getPosts() {
+    public List<PostForResponse> getPosts() {
         return posts;
     }
 
-    public void setPosts(List<Post> posts) {
+    public void setPosts(List<PostForResponse> posts) {
         this.posts = posts;
     }
 }

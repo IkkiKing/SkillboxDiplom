@@ -1,5 +1,5 @@
 spring.datasource.url: jdbc:mysql://localhost:3306/forum?serverTimezone=UTC
-spring.datasource.username: easmelov
+spring.datasource.username: root  
 spring.datasource.password: CTpmqjV99F
 spring.jpa.hibernate.ddl-auto: none
 spring.jpa.show-sql: true

@@ -1,6 +1,7 @@
 package com.ikkiking.service;
 
 import com.ikkiking.api.response.PostResponse.*;
+import com.ikkiking.model.Post;
 import com.ikkiking.model.PostComments;
 import com.ikkiking.model.Tag;
 import com.ikkiking.repository.*;
@@ -26,13 +27,13 @@ public class PostService {
     private TagRepository tagRepository;
 
 
-    private static Page<com.ikkiking.model.Post> getPostFromDb(PostRepository postRepository,
+    private static Page<Post> getPostFromDb(PostRepository postRepository,
                                                                int limit,
                                                                int offset,
                                                                String mode) {
 
         Pageable sortedByMode;
-        Page<com.ikkiking.model.Post> posts;
+        Page<Post> posts;
 
         switch (mode) {
             case "early": {
@@ -63,10 +64,10 @@ public class PostService {
 
     private static void enrichPost(PostVoteRepository postVoteRepository,
                                    PostCommentsRepository postCommentsRepository,
-                                   Page<com.ikkiking.model.Post> postPage,
+                                   Page<Post> postPage,
                                    @NotNull PostResponse postResponse) {
 
-        List<Post> listPosts = new ArrayList<>();
+        List<PostForResponse> listPosts = new ArrayList<>();
         long elementsCount = 0;
 
         //Нужна ли проверка на null? Судя по всему обращение в бд, даже если ничего не находится
@@ -88,7 +89,7 @@ public class PostService {
 
                 User user = new User(t.getUser().getId(), t.getUser().getName());
 
-                listPosts.add(new Post(postId,
+                listPosts.add(new PostForResponse(postId,
                         timestamp,
                         user,
                         title,
@@ -106,7 +107,7 @@ public class PostService {
 
     public GetPostResponse getPosts(int limit, int offset, String mode) {
 
-        Page<com.ikkiking.model.Post> postPage = getPostFromDb(postRepository, limit, offset, mode);
+        Page<Post> postPage = getPostFromDb(postRepository, limit, offset, mode);
 
         GetPostResponse postResponse = new GetPostResponse();
 
@@ -120,7 +121,7 @@ public class PostService {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
-        Page<com.ikkiking.model.Post> postPage = postRepository.findAllBySearch(sortedByMode, query);
+        Page<Post> postPage = postRepository.findAllBySearch(sortedByMode, query);
 
         SearchPostResponse postResponse = new SearchPostResponse();
 
@@ -133,7 +134,7 @@ public class PostService {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
-        Page<com.ikkiking.model.Post> postPage = postRepository.findAllByDate(sortedByMode, date);
+        Page<Post> postPage = postRepository.findAllByDate(sortedByMode, date);
 
         PostByDateResponse postResponse = new PostByDateResponse();
 
@@ -147,7 +148,7 @@ public class PostService {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
-        Page<com.ikkiking.model.Post> postPage = postRepository.findAllByTag(sortedByMode, tag);
+        Page<Post> postPage = postRepository.findAllByTag(sortedByMode, tag);
 
         PostByTagResponse postResponse = new PostByTagResponse();
 
@@ -160,7 +161,7 @@ public class PostService {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
-        Page<com.ikkiking.model.Post> postPage = postRepository.findAllForModeration(sortedByMode, status);
+        Page<Post> postPage = postRepository.findAllForModeration(sortedByMode, status);
 
         PostForModerationResponse postResponse = new PostForModerationResponse();
 
@@ -178,10 +179,10 @@ public class PostService {
     public PostByIdResponse getPostByid(long id) {
         PostByIdResponse postByIdResponse = null;
 
-        Optional<com.ikkiking.model.Post> postOptional = postRepository.findById(id);
+        Optional<Post> postOptional = postRepository.findById(id);
 
         if (postOptional.isPresent()) {
-            com.ikkiking.model.Post post = postOptional.get();
+            Post post = postOptional.get();
 
             Long postId      = post.getId();
             long timestamp   = post.getTime().getTime() / 1000L;

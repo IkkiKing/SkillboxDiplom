@@ -1,6 +1,6 @@
 package com.ikkiking.api.response.PostResponse;
 
-public class Post {
+public class PostForResponse {
 
     private Long id;
 
@@ -20,7 +20,7 @@ public class Post {
 
     private Long viewCount;
 
-    public Post(Long id, Long timestamp, User user, String title, String announce, Long likeCount, Long dislikeCount, Long commentCount, Long viewCount) {
+    public PostForResponse(Long id, Long timestamp, User user, String title, String announce, Long likeCount, Long dislikeCount, Long commentCount, Long viewCount) {
         this.id = id;
         this.timestamp = timestamp;
         this.user = user;

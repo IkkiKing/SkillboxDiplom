@@ -27,7 +27,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllByBest(Pageable pageable);
 
 
-    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate() and p.title LIKE %:query%",
+    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate() and (p.title LIKE %:query% or p.text like %:query%)",
             nativeQuery = true)
     Page<Post> findAllBySearch(Pageable pageable, String query);
 
