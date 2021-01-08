@@ -32,7 +32,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllBySearch(Pageable pageable, String query);
 
 
-    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate() and date(p.time) = STR_TO_DATE(:date, %Y, %m, %d)",
+    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate() and DATE(p.time) = STR_TO_DATE(:date, '%Y-%m-%d')",
             nativeQuery = true)
     Page<Post> findAllByDate(Pageable pageable, String date);
 
