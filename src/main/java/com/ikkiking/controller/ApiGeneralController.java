@@ -11,6 +11,7 @@ import com.ikkiking.service.CalendarService;
 import com.ikkiking.service.SettingsService;
 import com.ikkiking.service.StatisticService;
 import com.ikkiking.service.TagService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,6 +29,7 @@ public class ApiGeneralController {
     private final CalendarService calendarService;
     private final StatisticService statisticService;
 
+    @Autowired
     public ApiGeneralController(InitResponse initResponse, SettingsService settingsService, TagService tagService, CalendarService calendarService, StatisticService statisticService) {
         this.initResponse = initResponse;
         this.settingsService = settingsService;

@@ -1,19 +1,12 @@
 package com.ikkiking.api.response.TagResponse;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
 import java.util.List;
 
+@Data
+@AllArgsConstructor
 public class TagResponse {
     private List<Tag> tags;
-
-    public TagResponse(List<Tag> tags) {
-        this.tags = tags;
-    }
-
-    public List<Tag> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<Tag> tags) {
-        this.tags = tags;
-    }
 }
