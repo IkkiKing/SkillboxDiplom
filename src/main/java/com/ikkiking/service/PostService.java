@@ -19,19 +19,24 @@ import java.util.*;
 
 @Service
 public class PostService {
+
+    private final PostRepository postRepository;
+    private final PostVoteRepository postVoteRepository;
+    private final PostCommentsRepository postCommentsRepository;
+    private final TagRepository tagRepository;
+
     @Autowired
-    private PostRepository postRepository;
-    @Autowired
-    private PostVoteRepository postVoteRepository;
-    @Autowired
-    private PostCommentsRepository postCommentsRepository;
-    @Autowired
-    private TagRepository tagRepository;
+    public PostService(PostRepository postRepository, PostVoteRepository postVoteRepository, PostCommentsRepository postCommentsRepository, TagRepository tagRepository) {
+        this.postRepository = postRepository;
+        this.postVoteRepository = postVoteRepository;
+        this.postCommentsRepository = postCommentsRepository;
+        this.tagRepository = tagRepository;
+    }
 
     private static Page<Post> getPostFromDb(PostRepository postRepository,
-                                                               int limit,
-                                                               int offset,
-                                                               String mode) {
+                                            int limit,
+                                            int offset,
+                                            String mode) {
 
         Pageable sortedByMode;
         Page<Post> posts;
