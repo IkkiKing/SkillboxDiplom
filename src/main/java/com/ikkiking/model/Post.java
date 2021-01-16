@@ -1,10 +1,13 @@
 package com.ikkiking.model;
 
+import lombok.Data;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.List;
 
+@Data
 @Entity(name = "posts")
 public class Post {
 
@@ -50,100 +53,4 @@ public class Post {
     )
     private List<Tag> tags;
 
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    public ModerationStatus getModerationStatus() {
-        return moderationStatus;
-    }
-
-    public void setModerationStatus(ModerationStatus moderationStatus) {
-        this.moderationStatus = moderationStatus;
-    }
-
-    public User getModerator() {
-        return moderator;
-    }
-
-    public void setModerator(User moderator) {
-        this.moderator = moderator;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Date getTime() {
-        return time;
-    }
-
-    public void setTime(Date time) {
-        this.time = time;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
-    public Long getViewCount() {
-        return viewCount;
-    }
-
-    public void setViewCount(Long viewCount) {
-        this.viewCount = viewCount;
-    }
-
-    public List<Tag> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<Tag> tags) {
-        this.tags = tags;
-    }
-
-    /*public Collection<PostComments> getPostComments() {
-        return postComments;
-    }
-
-    public void setPostComments(Collection<PostComments> postComments) {
-        this.postComments = postComments;
-    }
-
-    public Collection<PostVote> getPostVotes() {
-        return postVotes;
-    }
-
-    public void setPostVotes(Collection<PostVote> postVotes) {
-        this.postVotes = postVotes;
-    }*/
 }

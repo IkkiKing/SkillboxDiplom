@@ -1,11 +1,13 @@
 package com.ikkiking.model;
 
 
+import lombok.Data;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
-
+@Data
 @Entity(name = "captcha_codes")
 public class CaptchaCodes {
     @Id
