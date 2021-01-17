@@ -1,9 +1,11 @@
 package com.ikkiking.security;
 
-import com.ikkiking.model.User;
 import lombok.Data;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -51,7 +53,7 @@ public class SecurityUser implements UserDetails {
         return true;
     }
 
-    public static UserDetails fromUser(User user){
+    public static UserDetails fromUser(com.ikkiking.model.User user){
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
@@ -61,5 +63,15 @@ public class SecurityUser implements UserDetails {
                 true,
                 user.getRole().getAuthorities()
         );
+    }
+
+    public static String getEmailFromContext(){
+        String email = null;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null){
+            User user = (User) auth.getPrincipal();
+            email = user.getUsername();
+        }
+        return email;
     }
 }
