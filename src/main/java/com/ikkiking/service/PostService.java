@@ -5,16 +5,17 @@ import com.ikkiking.model.Post;
 import com.ikkiking.model.PostComments;
 import com.ikkiking.model.Tag;
 import com.ikkiking.repository.*;
+import com.ikkiking.security.SecurityUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+
 import javax.validation.constraints.NotNull;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -29,9 +30,9 @@ public class PostService {
     private TagRepository tagRepository;
 
     private static Page<Post> getPostFromDb(PostRepository postRepository,
-                                                               int limit,
-                                                               int offset,
-                                                               String mode) {
+                                            int limit,
+                                            int offset,
+                                            String mode) {
 
         Pageable sortedByMode;
         Page<Post> posts;
@@ -146,7 +147,6 @@ public class PostService {
 
     public PostByTagResponse getPostsByTag(int limit, int offset, String tag) {
 
-
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
         Page<Post> postPage = postRepository.findAllByTag(sortedByMode, tag);
@@ -162,7 +162,9 @@ public class PostService {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
-        Page<Post> postPage = postRepository.findAllForModeration(sortedByMode, status);
+        String email = SecurityUser.getEmailFromContext();
+
+        Page<Post> postPage = postRepository.findAllForModeration(sortedByMode, email, status);
 
         PostForModerationResponse postResponse = new PostForModerationResponse();
 
@@ -172,8 +174,41 @@ public class PostService {
     }
 
     public MyPostResponse getMyPosts(int limit, int offset, String status) {
+
+        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+
+        String email = SecurityUser.getEmailFromContext();
+
+        int isActive = 0;
+        String moderationStatus = null;
+
+        switch (status) {
+            case "inactive": {
+                break;
+            }
+            case "pending": {
+                isActive = 1;
+                moderationStatus = "NEW";
+                break;
+            }
+            case "declined": {
+                isActive = 1;
+                moderationStatus = "DECLINED";
+                break;
+            }
+            case "published": {
+                isActive = 1;
+                moderationStatus = "ACCEPTED";
+                break;
+            }
+        }
+        //System.out.println(email + " " + isActive + " " +moderationStatus);
+        Page<Post> postPage = postRepository.findMyPosts(sortedByMode, email, isActive, moderationStatus);
+
         MyPostResponse postResponse = new MyPostResponse();
-        createFakeResponse(postResponse);
+
+        enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
+
         return postResponse;
     }
 
@@ -185,8 +220,8 @@ public class PostService {
         if (postOptional.isPresent()) {
             Post post = postOptional.get();
 
-            Long postId      = post.getId();
-            long timestamp   = post.getTime().getTime() / 1000L;
+            Long postId = post.getId();
+            long timestamp = post.getTime().getTime() / 1000L;
             boolean isActive = post.isActive();
 
 

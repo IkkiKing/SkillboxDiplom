@@ -39,32 +39,32 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/init")
-    private InitResponse init(){
+    public InitResponse init(){
         return initResponse;
     }
 
     @GetMapping("/settings")
-    private SettingsResponse settings(){
+    public SettingsResponse settings(){
         return settingsService.getGlobalSettings();
     }
 
     @GetMapping("/tag")
-    private TagResponse getTags(@RequestParam(name = "query", required = false) String query){
+    public TagResponse getTags(@RequestParam(name = "query", required = false) String query){
         return tagService.getTag(query);
     }
 
     @GetMapping("/calendar")
-    private CalendarResponse getCalendar(@RequestParam(name = "year", required = false, defaultValue = "0") int year){
+    public CalendarResponse getCalendar(@RequestParam(name = "year", required = false, defaultValue = "0") int year){
         return calendarService.getCalendar(year);
     }
 
     @GetMapping("/statistics/my")
-    private MyStatisticResponse getMyStatistic(){
+    public MyStatisticResponse getMyStatistic(){
         return statisticService.getMyStatistic();
     }
 
     @GetMapping("/statistics/all")
-    private AllStatisticResponse getAllStatistic(){
+    public AllStatisticResponse getAllStatistic(){
         return statisticService.getAllStatistic();
     }
 }

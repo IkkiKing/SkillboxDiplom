@@ -28,19 +28,19 @@ public class ApiAuthController {
     }
 
     @GetMapping("/check")
-    private ResponseEntity<LoginResponse> check(Principal principal){
+    public ResponseEntity<LoginResponse> check(Principal principal){
         return authService.check(principal);
     }
 
 
    @GetMapping("/captcha")
-   private AuthCaptchaResponse getCaptcha(){
+   public AuthCaptchaResponse getCaptcha(){
        return authService.getCaptcha();
    }
 
 
     @GetMapping("/logout")
-    private AuthLogoutResponse logout(){
+    public AuthLogoutResponse logout(){
         return authService.logout();
     }
 }

@@ -22,7 +22,6 @@ import java.security.Principal;
 @Service
 public class AuthService {
 
-
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
 
@@ -32,13 +31,13 @@ public class AuthService {
         this.userRepository = userRepository;
     }
 
-
-
     private LoginResponse getLoginResponse(String email){
         com.ikkiking.model.User currentUser = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
 
         UserLoginResponse userLoginResponse = new UserLoginResponse();
         userLoginResponse.setEmail(currentUser.getEmail());
+        userLoginResponse.setName(currentUser.getName());
+        userLoginResponse.setPhoto(currentUser.getPhoto());
         userLoginResponse.setModeration(currentUser.isModerator());
         userLoginResponse.setId(currentUser.getId());
 
@@ -57,8 +56,8 @@ public class AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
         User user = (User)auth.getPrincipal();
-
-        return ResponseEntity.ok(getLoginResponse(user.getUsername()));
+        LoginResponse loginResponse = getLoginResponse(user.getUsername());
+        return ResponseEntity.ok(loginResponse);
     }
 
     public ResponseEntity<LoginResponse> check(Principal principal){
