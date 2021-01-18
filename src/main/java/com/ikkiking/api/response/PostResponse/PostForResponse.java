@@ -9,7 +9,7 @@ public class PostForResponse {
 
     private Long id;
     private Long timestamp;
-    private User user;
+    private UserResponse user;
     private String title;
     private String announce;
     private Long likeCount;

@@ -72,6 +72,7 @@ public class AuthService {
     }
 
     public AuthLogoutResponse logout(){
+        SecurityContextHolder.clearContext();
         return new AuthLogoutResponse(true);
     }
 }

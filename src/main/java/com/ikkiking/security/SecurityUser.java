@@ -54,7 +54,7 @@ public class SecurityUser implements UserDetails {
     }
 
     public static UserDetails fromUser(com.ikkiking.model.User user){
-        return new org.springframework.security.core.userdetails.User(
+        return new User(
                 user.getEmail(),
                 user.getPassword(),
                 true,
@@ -68,7 +68,7 @@ public class SecurityUser implements UserDetails {
     public static String getEmailFromContext(){
         String email = null;
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null){
+        if (!auth.getPrincipal().equals("anonymousUser")){
             User user = (User) auth.getPrincipal();
             email = user.getUsername();
         }

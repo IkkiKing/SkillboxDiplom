@@ -11,7 +11,7 @@ import java.util.Date;
 @Entity(name = "captcha_codes")
 public class CaptchaCodes {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull(message = "captcha_codes.time may not be null")

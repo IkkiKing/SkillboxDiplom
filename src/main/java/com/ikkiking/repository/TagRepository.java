@@ -7,6 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TagRepository extends CrudRepository<Tag, Integer> {
@@ -26,5 +27,6 @@ public interface TagRepository extends CrudRepository<Tag, Integer> {
             nativeQuery = true)
     List<Tag> findAllByPost(Long postId);
 
-
+    @Query(value = "select t.* from tags t where t.name = :name", nativeQuery = true)
+    Optional<Tag> findByName(String name);
 }

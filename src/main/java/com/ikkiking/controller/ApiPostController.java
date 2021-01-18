@@ -1,9 +1,9 @@
 package com.ikkiking.controller;
 
+import com.ikkiking.api.request.PostRequest;
 import com.ikkiking.api.response.PostResponse.*;
 import com.ikkiking.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -69,4 +69,17 @@ public class ApiPostController {
     public PostByIdResponse getPostById(@PathVariable long id){
         return postService.getPostByid(id);
     }
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('user:write')")
+    public ResponseEntity<PostReturnResponse> addPost(@RequestBody PostRequest postRequest){
+        return postService.addPost(postRequest);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('user:write')")
+    public ResponseEntity<PostReturnResponse> editPost(@PathVariable long id, @RequestBody PostRequest postRequest){
+        return postService.editPost(id, postRequest);
+    }
+
 }
