@@ -59,6 +59,37 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             nativeQuery = true)
     List<CalendarCustom> findPostDates(int year);
 
-    @Override
-    Optional<Post> findById(Long id);
+    @Query(value = "select count(p.id) as postsCount," +
+            "       sum((select count(pv.id)" +
+            "          from post_votes pv" +
+            "         where pv.post_id = p.id" +
+            "            and pv.value = 1)) as likesCount," +
+            "       sum((select count(pv.id)" +
+            "        from post_votes pv" +
+            "        where pv.post_id = p.id" +
+            "          and pv.value = 0)) as dislikesCount," +
+            "       sum(p.view_count) as viewsCount," +
+            "       min(p.time) as firstPublication" +
+            "  from posts p" +
+            "  where p.is_active = 1" +
+            "    and p.moderation_status = 'ACCEPTED'" +
+            "    and p.time < sysdate()" +
+            "    and p.user_id = :userId",
+            nativeQuery = true)
+    StatisticCustom findByUserId(Long userId);
+
+    @Query(value = "select count(p.id) as postsCount," +
+            "       sum((select count(pv.id)" +
+            "          from post_votes pv" +
+            "         where pv.post_id = p.id" +
+            "            and pv.value = 1)) as likesCount," +
+            "       sum((select count(pv.id)" +
+            "        from post_votes pv" +
+            "        where pv.post_id = p.id" +
+            "          and pv.value = 0)) as dislikesCount," +
+            "       sum(p.view_count) as viewsCount," +
+            "       min(p.time) as firstPublication" +
+            "  from posts p",
+            nativeQuery = true)
+    StatisticCustom findAllStatistic();
 }

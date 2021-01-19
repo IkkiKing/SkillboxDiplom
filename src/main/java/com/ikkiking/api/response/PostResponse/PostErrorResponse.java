@@ -5,19 +5,19 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-public class ErrorMessageResponse {
+public class PostErrorResponse {
     private String title;
     private String text;
     private String image;
 
-    public ErrorMessageResponse(){}
+    public PostErrorResponse(){}
 
-    public ErrorMessageResponse(String title, String text) {
+    public PostErrorResponse(String title, String text) {
         this.title = title;
         this.text = text;
     }
 
-    public ErrorMessageResponse(String image) {
+    public PostErrorResponse(String image) {
         this.image = image;
     }
 }

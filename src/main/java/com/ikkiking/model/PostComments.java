@@ -15,7 +15,7 @@ public class PostComments {
     private Long id;
 
     @Column(name = "parent_id")
-    private Long parent_id;
+    private Long parentId;
 
     @NotNull(message = "post_comments.post_id may not be null")
     @JoinColumn(name = "post_id")

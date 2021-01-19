@@ -14,12 +14,12 @@ public class PostByIdResponse {
     private Long likeCount;
     private Long dislikeCount;
     private Long viewCount;
-    private List<Comment> comments;
+    private List<CommentResponse> comments;
     private Set<String> tags;
 
 
 
-    public PostByIdResponse(Long id, long timestamp, boolean active, UserResponse user, String title, String text, Long likeCount, Long dislikeCount, Long viewCount, List<Comment> comments, Set<String> tags) {
+    public PostByIdResponse(Long id, long timestamp, boolean active, UserResponse user, String title, String text, Long likeCount, Long dislikeCount, Long viewCount, List<CommentResponse> comments, Set<String> tags) {
         this.id = id;
         this.timestamp = timestamp;
         this.active = active;
@@ -105,11 +105,11 @@ public class PostByIdResponse {
         this.viewCount = viewCount;
     }
 
-    public List<Comment> getComments() {
+    public List<CommentResponse> getComments() {
         return comments;
     }
 
-    public void setComments(List<Comment> comments) {
+    public void setComments(List<CommentResponse> comments) {
         this.comments = comments;
     }
 

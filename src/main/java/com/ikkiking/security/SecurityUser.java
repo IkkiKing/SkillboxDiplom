@@ -65,13 +65,5 @@ public class SecurityUser implements UserDetails {
         );
     }
 
-    public static String getEmailFromContext(){
-        String email = null;
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!auth.getPrincipal().equals("anonymousUser")){
-            User user = (User) auth.getPrincipal();
-            email = user.getUsername();
-        }
-        return email;
-    }
+
 }

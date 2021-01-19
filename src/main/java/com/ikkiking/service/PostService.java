@@ -3,20 +3,18 @@ package com.ikkiking.service;
 
 import com.ikkiking.api.request.PostRequest;
 import com.ikkiking.api.response.PostResponse.*;
+import com.ikkiking.base.ContextUser;
+import com.ikkiking.base.DateHelper;
 import com.ikkiking.model.*;
 import com.ikkiking.repository.*;
-import com.ikkiking.security.SecurityUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
 import javax.validation.constraints.NotNull;
-import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -177,7 +175,7 @@ public class PostService {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
-        String email = SecurityUser.getEmailFromContext();
+        String email = ContextUser.getEmailFromContext();
 
         Page<Post> postPage = postRepository.findAllForModeration(sortedByMode, email, status);
 
@@ -193,7 +191,7 @@ public class PostService {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
-        String email = SecurityUser.getEmailFromContext();
+        String email = ContextUser.getEmailFromContext();
 
         int isActive = 0;
         String moderationStatus = null;
@@ -251,15 +249,15 @@ public class PostService {
 
 
             List<PostComments> postCommentsList = postCommentsRepository.findAllByIPostId(postId);
-            List<Comment> commentList = new ArrayList<>();
+            List<CommentResponse> commentList = new ArrayList<>();
 
             postCommentsList.forEach(a -> {
 
-                CommentUser commentUser = new CommentUser(a.getUser().getId(),
+                CommentUserResponse commentUser = new CommentUserResponse(a.getUser().getId(),
                         a.getUser().getName(),
                         a.getUser().getPhoto());
 
-                Comment comment = new Comment(a.getId(),
+                CommentResponse comment = new CommentResponse(a.getId(),
                         a.getTime().getTime() / 1000L,
                         a.getText(),
                         commentUser);
@@ -308,7 +306,7 @@ public class PostService {
 
         boolean isIncrementViewCount = true;
 
-        User currentUser = getUserFromContext();
+        User currentUser = ContextUser.getUserFromContext(userRepository);
 
         if (currentUser.isModerator() || (currentUser.getId() == user.getId())) {
             isIncrementViewCount = false;
@@ -317,13 +315,7 @@ public class PostService {
         return isIncrementViewCount;
     }
 
-    //Получение юзера из контекста
-    private User getUserFromContext() throws UsernameNotFoundException {
-        String email = SecurityUser.getEmailFromContext();
 
-        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("user " + email +
-                " not found"));
-    }
 
     //Проверки поста перед сохранением
     private boolean isCorrectPost(PostRequest postRequest,
@@ -344,27 +336,14 @@ public class PostService {
                 text = "Текст публикации слишком короткий";
             }
 
-            postPutResponse.setErrors(new ErrorMessageResponse(title, text));
+            postPutResponse.setErrors(new PostErrorResponse(title, text));
 
             isCorrectPost = false;
         }
         return isCorrectPost;
     }
 
-    //Получаем правильную дату для поста из таймстампа
-    private Date getRightDateFromTimeStamp(Long postTimestamp) {
 
-        Timestamp timestamp = new Timestamp(postTimestamp);
-
-        //Если указанное время меньше текущего, зададим текущее
-        if (postTimestamp < System.currentTimeMillis()) {
-            timestamp = new Timestamp(System.currentTimeMillis());
-        }
-
-        Date date = new Date(timestamp.getTime());
-
-        return date;
-    }
 
     //Добавляем пост
     public ResponseEntity<PostReturnResponse> addPost(PostRequest postRequest) {
@@ -374,13 +353,13 @@ public class PostService {
         //Проверяем пост
         if (isCorrectPost(postRequest, postPutResponse)) {
             //Ищем юзера в контексте
-            User user = getUserFromContext();
+            User user = ContextUser.getUserFromContext(userRepository);
 
             Post post = new Post();
             post.setActive(postRequest.getActive() == 1);
             post.setModerationStatus(ModerationStatus.NEW);
             post.setUser(user);
-            post.setTime(getRightDateFromTimeStamp(postRequest.getTimestamp()));
+            post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
             post.setTitle(postRequest.getTitle());
             post.setText(postRequest.getText());
             post.setViewCount(0l);
@@ -439,13 +418,13 @@ public class PostService {
         if (isCorrectPost(postRequest, postPutResponse)) {
             Post post = postRepository.findById(postId).get();
 
-            User currentUser = getUserFromContext();
+            User currentUser = ContextUser.getUserFromContext(userRepository);
 
             //Если пост сохраняет автор и он не является модератором, присваиваем статус NEW
             if (post.getUser().getId() == currentUser.getId() && !currentUser.isModerator()) {
                 post.setModerationStatus(ModerationStatus.NEW);
             }
-            post.setTime(getRightDateFromTimeStamp(postRequest.getTimestamp()));
+            post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
             post.setActive(postRequest.getActive() == 1);
             post.setTitle(postRequest.getTitle());
             post.setText(postRequest.getText());

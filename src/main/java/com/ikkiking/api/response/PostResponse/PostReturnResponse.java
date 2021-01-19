@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class PostReturnResponse {
     private boolean result;
-    private ErrorMessageResponse errors;
+    private PostErrorResponse errors;
 }
