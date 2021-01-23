@@ -1,20 +1,24 @@
 package com.ikkiking.service;
 
+
+import com.ikkiking.api.request.PostRequest;
+import com.ikkiking.api.request.VoteRequest;
 import com.ikkiking.api.response.PostResponse.*;
-import com.ikkiking.model.Post;
-import com.ikkiking.model.PostComments;
-import com.ikkiking.model.Tag;
+import com.ikkiking.api.response.VoteResponse;
+import com.ikkiking.base.ContextUser;
+import com.ikkiking.base.DateHelper;
+import com.ikkiking.model.*;
 import com.ikkiking.repository.*;
+import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotNull;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -24,15 +28,22 @@ public class PostService {
     private final PostVoteRepository postVoteRepository;
     private final PostCommentsRepository postCommentsRepository;
     private final TagRepository tagRepository;
+    private final Tag2PostRepository tag2PostRepository;
+    private final UserRepository userRepository;
+    private final GlobalSettingsRepository globalSettingsRepository;
 
     @Autowired
-    public PostService(PostRepository postRepository, PostVoteRepository postVoteRepository, PostCommentsRepository postCommentsRepository, TagRepository tagRepository) {
+    public PostService(PostRepository postRepository, PostVoteRepository postVoteRepository, PostCommentsRepository postCommentsRepository, TagRepository tagRepository, Tag2PostRepository tag2PostRepository, UserRepository userRepository, GlobalSettingsRepository globalSettingsRepository) {
         this.postRepository = postRepository;
         this.postVoteRepository = postVoteRepository;
         this.postCommentsRepository = postCommentsRepository;
         this.tagRepository = tagRepository;
+        this.tag2PostRepository = tag2PostRepository;
+        this.userRepository = userRepository;
+        this.globalSettingsRepository = globalSettingsRepository;
     }
 
+    //Получение постов по переданному типу
     private static Page<Post> getPostFromDb(PostRepository postRepository,
                                             int limit,
                                             int offset,
@@ -67,7 +78,7 @@ public class PostService {
         return posts;
     }
 
-
+    //Процедура обогащения поста
     private static void enrichPost(PostVoteRepository postVoteRepository,
                                    PostCommentsRepository postCommentsRepository,
                                    Page<Post> postPage,
@@ -93,7 +104,7 @@ public class PostService {
                 String title = t.getTitle();
                 String text = t.getText();
 
-                User user = new User(t.getUser().getId(), t.getUser().getName());
+                UserResponse user = new UserResponse(t.getUser().getId(), t.getUser().getName());
 
                 listPosts.add(new PostForResponse(postId,
                         timestamp,
@@ -111,6 +122,7 @@ public class PostService {
         postResponse.setPosts(listPosts);
     }
 
+    //Получение постов
     public GetPostResponse getPosts(int limit, int offset, String mode) {
 
         Page<Post> postPage = getPostFromDb(postRepository, limit, offset, mode);
@@ -122,12 +134,18 @@ public class PostService {
         return postResponse;
     }
 
-
+    //Получение списка постов по строке поиска
     public SearchPostResponse searchPosts(int limit, int offset, String query) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+        Page<Post> postPage;
 
-        Page<Post> postPage = postRepository.findAllBySearch(sortedByMode, query);
+        if (query.trim().isEmpty() || query == null) {
+            postPage = postRepository.findAll(sortedByMode);
+        } else {
+            postPage = postRepository.findAllBySearch(sortedByMode, query);
+        }
+
 
         SearchPostResponse postResponse = new SearchPostResponse();
 
@@ -136,6 +154,7 @@ public class PostService {
         return postResponse;
     }
 
+    //Получение постов по указанной дате
     public PostByDateResponse getPostsByDate(int limit, int offset, String date) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
@@ -149,8 +168,8 @@ public class PostService {
         return postResponse;
     }
 
+    //Получение постов по тэгу
     public PostByTagResponse getPostsByTag(int limit, int offset, String tag) {
-
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
@@ -163,11 +182,14 @@ public class PostService {
         return postResponse;
     }
 
+    //Получение постов для модерации
     public PostForModerationResponse getPostsForModeration(int limit, int offset, String status) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
-        Page<Post> postPage = postRepository.findAllForModeration(sortedByMode, status);
+        String email = ContextUser.getEmailFromContext();
+
+        Page<Post> postPage = postRepository.findAllForModeration(sortedByMode, email, status);
 
         PostForModerationResponse postResponse = new PostForModerationResponse();
 
@@ -176,12 +198,45 @@ public class PostService {
         return postResponse;
     }
 
+    //Получение списка своих постов
     public MyPostResponse getMyPosts(int limit, int offset, String status) {
+
+        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+
+        String email = ContextUser.getEmailFromContext();
+
+        int isActive = 1;
+        String moderationStatus = null;
+
+        switch (status) {
+            case "inactive": {
+                isActive = 0;
+                break;
+            }
+            case "pending": {
+                moderationStatus = "NEW";
+                break;
+            }
+            case "declined": {
+                moderationStatus = "DECLINED";
+                break;
+            }
+            case "published": {
+                moderationStatus = "ACCEPTED";
+                break;
+            }
+        }
+
+        Page<Post> postPage = postRepository.findMyPosts(sortedByMode, email, isActive, moderationStatus);
+
         MyPostResponse postResponse = new MyPostResponse();
-        createFakeResponse(postResponse);
+
+        enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
+
         return postResponse;
     }
 
+    //Получение поста по ID
     public PostByIdResponse getPostByid(long id) {
         PostByIdResponse postByIdResponse = null;
 
@@ -190,12 +245,12 @@ public class PostService {
         if (postOptional.isPresent()) {
             Post post = postOptional.get();
 
-            Long postId      = post.getId();
-            long timestamp   = post.getTime().getTime() / 1000L;
+            Long postId = post.getId();
+            long timestamp = post.getTime().getTime() / 1000L;
             boolean isActive = post.isActive();
 
 
-            User user = new User(post.getUser().getId(), post.getUser().getName());
+            UserResponse user = new UserResponse(post.getUser().getId(), post.getUser().getName());
             String title = post.getTitle();
             String text = post.getText();
             long likesCount = postVoteRepository.countLikesByPost(post);
@@ -204,15 +259,15 @@ public class PostService {
 
 
             List<PostComments> postCommentsList = postCommentsRepository.findAllByIPostId(postId);
-            List<Comment> commentList = new ArrayList<>();
+            List<CommentResponse> commentList = new ArrayList<>();
 
             postCommentsList.forEach(a -> {
 
-                CommentUser commentUser = new CommentUser(a.getUser().getId(),
+                CommentUserResponse commentUser = new CommentUserResponse(a.getUser().getId(),
                         a.getUser().getName(),
                         a.getUser().getPhoto());
 
-                Comment comment = new Comment(a.getId(),
+                CommentResponse comment = new CommentResponse(a.getId(),
                         a.getTime().getTime() / 1000L,
                         a.getText(),
                         commentUser);
@@ -244,38 +299,209 @@ public class PostService {
                     commentList,
                     tagStrList
             );
+
+
+            //Увеличиваем кол-во просмотров на 1
+            if (isIncrementViewCount(post.getUser())) {
+                post.setViewCount(post.getViewCount() + 1);
+                postRepository.save(post);
+            }
         }
 
         return postByIdResponse;
     }
 
-    private static void createFakeResponse(PostResponse postResponse) {
-        /*postResponse.setCount(5);
+    //Метод определяет, надо ли увеличивать счётчик просмотров поста
+    private boolean isIncrementViewCount(User user) {
 
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        calendar.clear();
-        calendar.set(2020, Calendar.NOVEMBER, 26);
-        long date = calendar.getTimeInMillis() / 1000L;
+        boolean isIncrementViewCount = true;
 
-        Post post = new Post(1,
-                date,
-                new User(1,
-                        "Вася Петров"),
-                "Приветсвенный пост",
-                "Привет всем, на нашем уютном форуме",
-                1,
-                2,
-                3,
-                4
-        );
+        User currentUser = ContextUser.getUserFromContext(userRepository);
 
-        List<Post> listPosts = new ArrayList<>();
-        listPosts.add(post);
+        if (currentUser.isModerator() || (currentUser.getId() == user.getId())) {
+            isIncrementViewCount = false;
+        }
 
-        postResponse.setPosts(listPosts);*/
+        return isIncrementViewCount;
     }
 
 
+    //Проверки поста перед сохранением
+    private boolean isCorrectPost(PostRequest postRequest,
+                                  PostReturnResponse postPutResponse) {
+        boolean isCorrectPost = true;
+
+        if (postRequest.getTitle().length() < 3 || postRequest.getText().length() < 50) {
+
+            postPutResponse.setResult(false);
+
+            String title = null;
+            String text = null;
+
+            if (postRequest.getTitle().length() < 3) {
+                title = "Заголовок не установлен";
+            }
+            if (postRequest.getText().length() < 50) {
+                text = "Текст публикации слишком короткий";
+            }
+
+            postPutResponse.setErrors(new PostErrorResponse(title, text));
+
+            isCorrectPost = false;
+        }
+        return isCorrectPost;
+    }
+
+    //Добавляем пост
+    public ResponseEntity<PostReturnResponse> addPost(PostRequest postRequest) {
+
+        PostReturnResponse postPutResponse = new PostReturnResponse();
+
+        //Проверяем пост
+        if (isCorrectPost(postRequest, postPutResponse)) {
+            //Ищем юзера в контексте
+            User user = ContextUser.getUserFromContext(userRepository);
+
+            Post post = new Post();
+            post.setActive(postRequest.getActive() == 1);
+            post.setModerationStatus(ModerationStatus.NEW);
+
+            //Если юзер является модератором или предмодерация отключена, пост сразу становится принят
+            if (!SettingsService.getSettingsValue(globalSettingsRepository, "POST_PREMODERATION") || user.isModerator()){
+                post.setModerationStatus(ModerationStatus.ACCEPTED);
+            }else{
+                post.setModerationStatus(ModerationStatus.NEW);
+            }
+
+            post.setUser(user);
+            post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
+            post.setTitle(postRequest.getTitle());
+            post.setText(postRequest.getText());
+            post.setViewCount(0l);
+
+            Post newPost = postRepository.save(post);
+
+            setTagsToPost(postRequest.getTags(), newPost.getId());
+
+            postPutResponse.setResult(true);
+        }
+
+
+        return ResponseEntity.ok(postPutResponse);
+    }
+
+    //Сохраняем тэги для поста
+    private void setTagsToPost(List<String> tags,
+                               Long postId) {
+
+        if (tags != null) {
+            tags.forEach(t -> {
+
+                Optional<Tag> tagOptional = tagRepository.findByName(t);
+
+                Tag tag;
+
+                if (tagOptional.isPresent()) {
+
+                    tag = tagOptional.get();
+
+                } else {
+
+                    tag = new Tag();
+                    tag.setName(t);
+                    tag = tagRepository.save(tag);
+
+                }
+
+                Tag2Post tag2Post = new Tag2Post();
+                tag2Post.setPostId(postId);
+                tag2Post.setTagId(tag.getId());
+
+                //Если нету связки поста с тэгом, то добавляем  её
+                if (tag2PostRepository.countByTagIdAndPostId(tag.getId(), postId) == 0) {
+                    tag2PostRepository.save(tag2Post);
+                }
+
+            });
+        }
+    }
+
+    public ResponseEntity<PostReturnResponse> editPost(long postId, PostRequest postRequest) {
+        PostReturnResponse postPutResponse = new PostReturnResponse();
+
+        //Проверяем пост
+        if (isCorrectPost(postRequest, postPutResponse)) {
+            Post post = postRepository.findById(postId).get();
+
+            User currentUser = ContextUser.getUserFromContext(userRepository);
+
+            //Если пост сохраняет автор и он не является модератором, присваиваем статус NEW
+            if (post.getUser().getId() == currentUser.getId() && !currentUser.isModerator()) {
+                post.setModerationStatus(ModerationStatus.NEW);
+            }
+            post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
+            post.setActive(postRequest.getActive() == 1);
+            post.setTitle(postRequest.getTitle());
+            post.setText(postRequest.getText());
+
+            postRepository.save(post);
+
+            setTagsToPost(postRequest.getTags(), postId);
+
+            postPutResponse.setResult(true);
+        }
+        return ResponseEntity.ok(postPutResponse);
+    }
+
+
+    public ResponseEntity<VoteResponse> like(VoteRequest voteRequest) {
+        return ResponseEntity.ok(getVoteResponse(voteRequest, 1));
+    }
+
+    public ResponseEntity<VoteResponse> dislike(VoteRequest voteRequest) {
+        return ResponseEntity.ok(getVoteResponse(voteRequest, 0));
+    }
+
+    private VoteResponse getVoteResponse(VoteRequest voteRequest,
+                                         Integer value) {
+
+        VoteResponse voteResponse = new VoteResponse();
+
+        Optional<Post> postOptional = postRepository.findById(voteRequest.getPostId());
+        //Если пост не найден в БД, дальше делать нечего
+        if (!postOptional.isPresent()) {
+            voteResponse.setResult(false);
+            return voteResponse;
+        }
+
+        User user = ContextUser.getUserFromContext(userRepository);
+
+        Optional<PostVote> postVoteOptional = postVoteRepository.findByPostIdAndUserId(voteRequest.getPostId(), user.getId());
+
+        PostVote postVote;
+        //Если запись уже есть в БД
+        if (postVoteOptional.isPresent()) {
+            postVote = postVoteOptional.get();
+
+            //Если ранее был уже поставлен аналогичный Vote
+            if (postVote.getValue() == value) {
+                voteResponse.setResult(false);
+            } else {
+                postVote.setValue(value);
+                postVoteRepository.save(postVote);
+                voteResponse.setResult(true);
+            }
+        } else {
+            postVote = new PostVote();
+            postVote.setUser(user);
+            postVote.setPost(postOptional.get());
+            postVote.setTime(DateHelper.getCurrentDate().getTime());
+            postVote.setValue(value);
+            postVoteRepository.save(postVote);
+            voteResponse.setResult(true);
+        }
+        return voteResponse;
+    }
 }
 
 

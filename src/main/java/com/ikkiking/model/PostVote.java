@@ -11,7 +11,7 @@ import java.util.Date;
 public class PostVote {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull(message = "post_votes.user_id may not be null")
@@ -27,6 +27,6 @@ public class PostVote {
     private Date time;
 
     @NotNull(message = "post_votes.value may not be null")
-    private boolean value;
+    private Integer value;
 
 }

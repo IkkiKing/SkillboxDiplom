@@ -11,11 +11,11 @@ import java.util.Date;
 public class PostComments {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "parent_id")
-    private Long parent_id;
+    private Long parentId;
 
     @NotNull(message = "post_comments.post_id may not be null")
     @JoinColumn(name = "post_id")

@@ -11,7 +11,7 @@ import java.util.List;
 public class Tag {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull(message = "tags.name may not be null")

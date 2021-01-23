@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 public class Tag2Post {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull(message = "tag2post.post_id may not be null")

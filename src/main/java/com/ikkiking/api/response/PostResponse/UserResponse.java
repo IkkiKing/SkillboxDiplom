@@ -5,8 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class CommentUser {
+public class UserResponse {
     private Long id;
     private String name;
-    private String photo;
 }

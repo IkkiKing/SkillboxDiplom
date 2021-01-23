@@ -21,9 +21,10 @@ public class TagService {
         List<Tag> tagList = new ArrayList<>();
 
         List<TagCustom> tagsResp = tagRepository.findAllByTags(query);
+
+        //Нужна ли проверка на null? Возможно репозиторий возвращает инициализированную коллекцию
         if (tagsResp != null) {
             tagsResp.forEach(tagCustom -> {
-                System.out.println(tagCustom.getWeight());
                 tagList.add(new Tag(tagCustom.getName(), tagCustom.getWeight()));
             });
         }

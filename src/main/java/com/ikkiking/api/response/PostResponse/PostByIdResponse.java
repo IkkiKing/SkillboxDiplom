@@ -1,7 +1,6 @@
 package com.ikkiking.api.response.PostResponse;
 
 
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -9,18 +8,18 @@ public class PostByIdResponse {
     private Long id;
     private long timestamp;
     private boolean active;
-    private User user;
+    private UserResponse user;
     private String title;
     private String text;
     private Long likeCount;
     private Long dislikeCount;
     private Long viewCount;
-    private List<Comment> comments;
+    private List<CommentResponse> comments;
     private Set<String> tags;
 
 
 
-    public PostByIdResponse(Long id, long timestamp, boolean active, User user, String title, String text, Long likeCount, Long dislikeCount, Long viewCount, List<Comment> comments, Set<String> tags) {
+    public PostByIdResponse(Long id, long timestamp, boolean active, UserResponse user, String title, String text, Long likeCount, Long dislikeCount, Long viewCount, List<CommentResponse> comments, Set<String> tags) {
         this.id = id;
         this.timestamp = timestamp;
         this.active = active;
@@ -58,11 +57,11 @@ public class PostByIdResponse {
         this.active = active;
     }
 
-    public User getUser() {
+    public UserResponse getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(UserResponse user) {
         this.user = user;
     }
 
@@ -106,11 +105,11 @@ public class PostByIdResponse {
         this.viewCount = viewCount;
     }
 
-    public List<Comment> getComments() {
+    public List<CommentResponse> getComments() {
         return comments;
     }
 
-    public void setComments(List<Comment> comments) {
+    public void setComments(List<CommentResponse> comments) {
         this.comments = comments;
     }
 

@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
 @Entity(name = "global_settings")
 public class GlobalSettings {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull(message = "global_settings.code may not be null")

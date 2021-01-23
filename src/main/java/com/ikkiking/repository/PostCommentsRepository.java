@@ -9,9 +9,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface PostCommentsRepository extends CrudRepository<PostComments, Integer> {
+public interface PostCommentsRepository extends CrudRepository<PostComments, Long> {
 
-    @Query("select count(*) from post_comments pc where pc.post = ?1")
+    @Query(value = "select count(*) from post_comments pc where pc.post_id = :post",
+        nativeQuery = true)
     int countCommentsByPost(Post post);
 
     @Query(value = "SELECT * FROM post_comments pc " +

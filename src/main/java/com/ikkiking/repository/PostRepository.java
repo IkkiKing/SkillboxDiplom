@@ -42,9 +42,16 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllByTag(Pageable pageable, String tag);
 
 
-    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = upper(:status))",
+    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = upper(:status)" +
+            "and exists (select 1 from users u where u.id = p.moderator_id and u.email = :email)",
             nativeQuery = true)
-    Page<Post> findAllForModeration(Pageable pageable, String status);
+    Page<Post> findAllForModeration(Pageable pageable, String email, String status);
+
+    @Query(value = "SELECT * FROM posts p WHERE p.is_active = :isActive and (:moderationStatus is null or p.moderation_status = :moderationStatus) " +
+            "and exists (select 1 from users u where u.id = p.user_id and u.email = :email)",
+            nativeQuery = true)
+    Page<Post> findMyPosts(Pageable pageable, String email, int isActive, String moderationStatus);
+
 
     @Query(value = "select YEAR(p.time) as year, DATE_FORMAT(DATE(p.time), '%Y-%m-%d') as date, count(*) as amount from posts p " +
             "where YEAR(p.time) = :year and p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate()  " +
@@ -52,6 +59,41 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             nativeQuery = true)
     List<CalendarCustom> findPostDates(int year);
 
-    @Override
-    Optional<Post> findById(Long id);
+    @Query(value = "select count(p.id) as postsCount," +
+            "       sum((select count(pv.id)" +
+            "          from post_votes pv" +
+            "         where pv.post_id = p.id" +
+            "            and pv.value = 1)) as likesCount," +
+            "       sum((select count(pv.id)" +
+            "        from post_votes pv" +
+            "        where pv.post_id = p.id" +
+            "          and pv.value = 0)) as dislikesCount," +
+            "       sum(p.view_count) as viewsCount," +
+            "       min(p.time) as firstPublication" +
+            "  from posts p" +
+            "  where p.is_active = 1" +
+            "    and p.moderation_status = 'ACCEPTED'" +
+            "    and p.time < sysdate()" +
+            "    and p.user_id = :userId",
+            nativeQuery = true)
+    StatisticCustom findByUserId(Long userId);
+
+    @Query(value = "select count(p.id) as postsCount," +
+            "       sum((select count(pv.id)" +
+            "          from post_votes pv" +
+            "         where pv.post_id = p.id" +
+            "            and pv.value = 1)) as likesCount," +
+            "       sum((select count(pv.id)" +
+            "        from post_votes pv" +
+            "        where pv.post_id = p.id" +
+            "          and pv.value = 0)) as dislikesCount," +
+            "       sum(p.view_count) as viewsCount," +
+            "       min(p.time) as firstPublication" +
+            "  from posts p",
+            nativeQuery = true)
+    StatisticCustom findAllStatistic();
+
+    @Query(value = "select count(*) from posts p where p.moderation_status = 'NEW' and p.moderator_id is null",
+        nativeQuery = true)
+    int countPostsForModeration();
 }

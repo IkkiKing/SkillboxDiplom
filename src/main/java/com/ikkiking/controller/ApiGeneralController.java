@@ -1,23 +1,19 @@
 package com.ikkiking.controller;
 
-import com.ikkiking.api.response.CalendarResponse;
-import com.ikkiking.api.response.InitResponse;
-import com.ikkiking.api.response.SettingsResponse;
-import com.ikkiking.api.response.StatisticResponse.AllStatisticResponse;
-import com.ikkiking.api.response.StatisticResponse.MyStatisticResponse;
-import com.ikkiking.api.response.TagResponse.Tag;
+import com.ikkiking.api.request.CommentRequest;
+import com.ikkiking.api.request.ModerationRequest;
+import com.ikkiking.api.request.SettingsRequest;
+import com.ikkiking.api.response.*;
+import com.ikkiking.api.response.StatisticResponse.StatisticResponse;
 import com.ikkiking.api.response.TagResponse.TagResponse;
-import com.ikkiking.service.CalendarService;
-import com.ikkiking.service.SettingsService;
-import com.ikkiking.service.StatisticService;
-import com.ikkiking.service.TagService;
+import com.ikkiking.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api")
@@ -27,44 +23,73 @@ public class ApiGeneralController {
     private final SettingsService settingsService;
     private final TagService tagService;
     private final CalendarService calendarService;
-    private final StatisticService statisticService;
+    private final GeneralService generalService;
+    private final PostCommentsService postCommentsService;
 
     @Autowired
-    public ApiGeneralController(InitResponse initResponse, SettingsService settingsService, TagService tagService, CalendarService calendarService, StatisticService statisticService) {
+    public ApiGeneralController(InitResponse initResponse, SettingsService settingsService, TagService tagService, CalendarService calendarService, GeneralService generalService, PostCommentsService postCommentsService) {
         this.initResponse = initResponse;
         this.settingsService = settingsService;
         this.tagService = tagService;
         this.calendarService = calendarService;
-        this.statisticService = statisticService;
+        this.generalService = generalService;
+        this.postCommentsService = postCommentsService;
     }
 
+
     @GetMapping("/init")
-    private InitResponse init(){
+    public InitResponse init() {
         return initResponse;
     }
 
     @GetMapping("/settings")
-    private SettingsResponse settings(){
+    public SettingsResponse settings() {
         return settingsService.getGlobalSettings();
     }
 
+    @PutMapping("/settings")
+    @PreAuthorize("hasAuthority('user:moderate')")
+    public void setSettings(@RequestBody SettingsRequest settingsRequest) {
+        settingsService.setSettings(settingsRequest);
+    }
+
     @GetMapping("/tag")
-    private TagResponse getTags(@RequestParam(name = "query", required = false) String query){
+    public TagResponse getTags(@RequestParam(name = "query", required = false) String query) {
         return tagService.getTag(query);
     }
 
     @GetMapping("/calendar")
-    private CalendarResponse getCalendar(@RequestParam(name = "year", required = false, defaultValue = "0") int year){
+    public CalendarResponse getCalendar(@RequestParam(name = "year", required = false, defaultValue = "0") int year) {
         return calendarService.getCalendar(year);
     }
 
     @GetMapping("/statistics/my")
-    private MyStatisticResponse getMyStatistic(){
-        return statisticService.getMyStatistic();
+    @PreAuthorize("hasAuthority('user:write')")
+    public ResponseEntity<StatisticResponse> getMyStatistic() {
+        return generalService.getMyStatistic();
     }
 
     @GetMapping("/statistics/all")
-    private AllStatisticResponse getAllStatistic(){
-        return statisticService.getAllStatistic();
+    public ResponseEntity<StatisticResponse> getAllStatistic() {
+        return generalService.getAllStatistic();
     }
+
+    @PostMapping("/comment")
+    @PreAuthorize("hasAuthority('user:write')")
+    public ResponseEntity<CommentAddResponse> addComment(@RequestBody CommentRequest commentRequest) {
+        return postCommentsService.addComment(commentRequest);
+    }
+
+    @PostMapping("/moderation")
+    @PreAuthorize("hasAuthority('user:moderate')")
+    public ResponseEntity<ModerationResponse> moderate(@RequestBody ModerationRequest moderationRequest) {
+        return generalService.moderate(moderationRequest);
+    }
+
+    @PostMapping("/image")
+    @PreAuthorize("hasAuthority('user:write')")
+    public ResponseEntity<Object> image(@RequestParam("image") MultipartFile multipartFile){
+        return generalService.image(multipartFile);
+    }
+
 }

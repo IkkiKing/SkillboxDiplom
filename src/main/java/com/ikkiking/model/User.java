@@ -8,10 +8,11 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Data
-@Entity(name = "users")
+@Entity
+@Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull(message = "users.is_moderator may not be null")
@@ -29,7 +30,7 @@ public class User {
     private String email;
 
     @NotNull(message = "users.password may not be null")
-    @Column(length = 255)
+    @Column(nullable = false, length = 255)
     private String password;
 
     private String code;
