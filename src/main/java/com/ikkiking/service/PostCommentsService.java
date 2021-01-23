@@ -72,10 +72,6 @@ public class PostCommentsService {
         PostComments postComments = postCommentsRepository.save(comment);
         commentAddResponse.setId(postComments.getId());
         return ResponseEntity.ok(commentAddResponse);
-
-
-
-
     }
 
 

@@ -27,6 +27,6 @@ public class PostVote {
     private Date time;
 
     @NotNull(message = "post_votes.value may not be null")
-    private boolean value;
+    private Integer value;
 
 }

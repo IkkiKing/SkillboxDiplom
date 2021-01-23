@@ -2,11 +2,14 @@ package com.ikkiking.service;
 
 
 import com.ikkiking.api.request.PostRequest;
+import com.ikkiking.api.request.VoteRequest;
 import com.ikkiking.api.response.PostResponse.*;
+import com.ikkiking.api.response.VoteResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.DateHelper;
 import com.ikkiking.model.*;
 import com.ikkiking.repository.*;
+import org.hibernate.type.descriptor.java.DataHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
@@ -26,15 +30,17 @@ public class PostService {
     private final TagRepository tagRepository;
     private final Tag2PostRepository tag2PostRepository;
     private final UserRepository userRepository;
+    private final GlobalSettingsRepository globalSettingsRepository;
 
     @Autowired
-    public PostService(PostRepository postRepository, PostVoteRepository postVoteRepository, PostCommentsRepository postCommentsRepository, TagRepository tagRepository, Tag2PostRepository tag2PostRepository, UserRepository userRepository) {
+    public PostService(PostRepository postRepository, PostVoteRepository postVoteRepository, PostCommentsRepository postCommentsRepository, TagRepository tagRepository, Tag2PostRepository tag2PostRepository, UserRepository userRepository, GlobalSettingsRepository globalSettingsRepository) {
         this.postRepository = postRepository;
         this.postVoteRepository = postVoteRepository;
         this.postCommentsRepository = postCommentsRepository;
         this.tagRepository = tagRepository;
         this.tag2PostRepository = tag2PostRepository;
         this.userRepository = userRepository;
+        this.globalSettingsRepository = globalSettingsRepository;
     }
 
     //Получение постов по переданному типу
@@ -132,8 +138,14 @@ public class PostService {
     public SearchPostResponse searchPosts(int limit, int offset, String query) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+        Page<Post> postPage;
 
-        Page<Post> postPage = postRepository.findAllBySearch(sortedByMode, query);
+        if (query.trim().isEmpty() || query == null) {
+            postPage = postRepository.findAll(sortedByMode);
+        } else {
+            postPage = postRepository.findAllBySearch(sortedByMode, query);
+        }
+
 
         SearchPostResponse postResponse = new SearchPostResponse();
 
@@ -193,30 +205,28 @@ public class PostService {
 
         String email = ContextUser.getEmailFromContext();
 
-        int isActive = 0;
+        int isActive = 1;
         String moderationStatus = null;
 
         switch (status) {
             case "inactive": {
+                isActive = 0;
                 break;
             }
             case "pending": {
-                isActive = 1;
                 moderationStatus = "NEW";
                 break;
             }
             case "declined": {
-                isActive = 1;
                 moderationStatus = "DECLINED";
                 break;
             }
             case "published": {
-                isActive = 1;
                 moderationStatus = "ACCEPTED";
                 break;
             }
         }
-        //System.out.println(email + " " + isActive + " " +moderationStatus);
+
         Page<Post> postPage = postRepository.findMyPosts(sortedByMode, email, isActive, moderationStatus);
 
         MyPostResponse postResponse = new MyPostResponse();
@@ -316,7 +326,6 @@ public class PostService {
     }
 
 
-
     //Проверки поста перед сохранением
     private boolean isCorrectPost(PostRequest postRequest,
                                   PostReturnResponse postPutResponse) {
@@ -343,8 +352,6 @@ public class PostService {
         return isCorrectPost;
     }
 
-
-
     //Добавляем пост
     public ResponseEntity<PostReturnResponse> addPost(PostRequest postRequest) {
 
@@ -358,6 +365,14 @@ public class PostService {
             Post post = new Post();
             post.setActive(postRequest.getActive() == 1);
             post.setModerationStatus(ModerationStatus.NEW);
+
+            //Если юзер является модератором или предмодерация отключена, пост сразу становится принят
+            if (!SettingsService.getSettingsValue(globalSettingsRepository, "POST_PREMODERATION") || user.isModerator()){
+                post.setModerationStatus(ModerationStatus.ACCEPTED);
+            }else{
+                post.setModerationStatus(ModerationStatus.NEW);
+            }
+
             post.setUser(user);
             post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
             post.setTitle(postRequest.getTitle());
@@ -439,6 +454,54 @@ public class PostService {
     }
 
 
+    public ResponseEntity<VoteResponse> like(VoteRequest voteRequest) {
+        return ResponseEntity.ok(getVoteResponse(voteRequest, 1));
+    }
+
+    public ResponseEntity<VoteResponse> dislike(VoteRequest voteRequest) {
+        return ResponseEntity.ok(getVoteResponse(voteRequest, 0));
+    }
+
+    private VoteResponse getVoteResponse(VoteRequest voteRequest,
+                                         Integer value) {
+
+        VoteResponse voteResponse = new VoteResponse();
+
+        Optional<Post> postOptional = postRepository.findById(voteRequest.getPostId());
+        //Если пост не найден в БД, дальше делать нечего
+        if (!postOptional.isPresent()) {
+            voteResponse.setResult(false);
+            return voteResponse;
+        }
+
+        User user = ContextUser.getUserFromContext(userRepository);
+
+        Optional<PostVote> postVoteOptional = postVoteRepository.findByPostIdAndUserId(voteRequest.getPostId(), user.getId());
+
+        PostVote postVote;
+        //Если запись уже есть в БД
+        if (postVoteOptional.isPresent()) {
+            postVote = postVoteOptional.get();
+
+            //Если ранее был уже поставлен аналогичный Vote
+            if (postVote.getValue() == value) {
+                voteResponse.setResult(false);
+            } else {
+                postVote.setValue(value);
+                postVoteRepository.save(postVote);
+                voteResponse.setResult(true);
+            }
+        } else {
+            postVote = new PostVote();
+            postVote.setUser(user);
+            postVote.setPost(postOptional.get());
+            postVote.setTime(DateHelper.getCurrentDate().getTime());
+            postVote.setValue(value);
+            postVoteRepository.save(postVote);
+            voteResponse.setResult(true);
+        }
+        return voteResponse;
+    }
 }
 
 

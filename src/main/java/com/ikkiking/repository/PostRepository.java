@@ -92,4 +92,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "  from posts p",
             nativeQuery = true)
     StatisticCustom findAllStatistic();
+
+    @Query(value = "select count(*) from posts p where p.moderation_status = 'NEW' and p.moderator_id is null",
+        nativeQuery = true)
+    int countPostsForModeration();
 }

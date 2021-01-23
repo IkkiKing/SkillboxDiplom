@@ -1,10 +1,9 @@
 package com.ikkiking.controller;
 
 import com.ikkiking.api.request.CommentRequest;
-import com.ikkiking.api.response.CalendarResponse;
-import com.ikkiking.api.response.CommentAddResponse;
-import com.ikkiking.api.response.InitResponse;
-import com.ikkiking.api.response.SettingsResponse;
+import com.ikkiking.api.request.ModerationRequest;
+import com.ikkiking.api.request.SettingsRequest;
+import com.ikkiking.api.response.*;
 import com.ikkiking.api.response.StatisticResponse.StatisticResponse;
 import com.ikkiking.api.response.TagResponse.TagResponse;
 import com.ikkiking.service.*;
@@ -12,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api")
@@ -24,6 +26,7 @@ public class ApiGeneralController {
     private final GeneralService generalService;
     private final PostCommentsService postCommentsService;
 
+    @Autowired
     public ApiGeneralController(InitResponse initResponse, SettingsService settingsService, TagService tagService, CalendarService calendarService, GeneralService generalService, PostCommentsService postCommentsService) {
         this.initResponse = initResponse;
         this.settingsService = settingsService;
@@ -32,8 +35,6 @@ public class ApiGeneralController {
         this.generalService = generalService;
         this.postCommentsService = postCommentsService;
     }
-
-    @Autowired
 
 
     @GetMapping("/init")
@@ -44,6 +45,12 @@ public class ApiGeneralController {
     @GetMapping("/settings")
     public SettingsResponse settings() {
         return settingsService.getGlobalSettings();
+    }
+
+    @PutMapping("/settings")
+    @PreAuthorize("hasAuthority('user:moderate')")
+    public void setSettings(@RequestBody SettingsRequest settingsRequest) {
+        settingsService.setSettings(settingsRequest);
     }
 
     @GetMapping("/tag")
@@ -72,4 +79,17 @@ public class ApiGeneralController {
     public ResponseEntity<CommentAddResponse> addComment(@RequestBody CommentRequest commentRequest) {
         return postCommentsService.addComment(commentRequest);
     }
+
+    @PostMapping("/moderation")
+    @PreAuthorize("hasAuthority('user:moderate')")
+    public ResponseEntity<ModerationResponse> moderate(@RequestBody ModerationRequest moderationRequest) {
+        return generalService.moderate(moderationRequest);
+    }
+
+    @PostMapping("/image")
+    @PreAuthorize("hasAuthority('user:write')")
+    public ResponseEntity<Object> image(@RequestParam("image") MultipartFile multipartFile){
+        return generalService.image(multipartFile);
+    }
+
 }
