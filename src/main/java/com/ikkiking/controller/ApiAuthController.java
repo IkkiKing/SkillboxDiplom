@@ -36,7 +36,7 @@ public class ApiAuthController {
 
 
    @GetMapping("/captcha")
-   public AuthCaptchaResponse getCaptcha(){
+   public ResponseEntity<AuthCaptchaResponse> getCaptcha(){
        return authService.getCaptcha();
    }
 
@@ -45,7 +45,7 @@ public class ApiAuthController {
         return authService.logout();
     }
 
-    @GetMapping("/register")
+    @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest registerRequest){
         return authService.register(registerRequest);
     }
