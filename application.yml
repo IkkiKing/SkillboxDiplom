@@ -11,6 +11,7 @@ blog.email: mail@mail.ru
 blog.copyright: Дмитрий Сергеев
 blog.copyrightFrom: 2005
 
+authService.captchaDeleteHours: 1;
 
 spring.servlet.multipart.max-file-size: 10MB
 spring.servlet.multipart.max-request-size: 10MB

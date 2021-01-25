@@ -1,5 +1,7 @@
 package com.ikkiking.service;
 
+import com.github.cage.Cage;
+import com.github.cage.image.Painter;
 import com.ikkiking.api.request.LoginRequest;
 import com.ikkiking.api.request.RegisterRequest;
 import com.ikkiking.api.response.AuthResponse.AuthCaptchaResponse;
@@ -10,11 +12,13 @@ import com.ikkiking.api.response.RegisterResponse;
 import com.ikkiking.api.response.UserLoginResponse;
 import com.ikkiking.base.DateHelper;
 import com.ikkiking.config.SecurityConfig;
+import com.ikkiking.model.CaptchaCodes;
 import com.ikkiking.repository.CaptchaCodesRepository;
 import com.ikkiking.repository.GlobalSettingsRepository;
 import com.ikkiking.repository.PostRepository;
 import com.ikkiking.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,9 +28,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.util.DateUtils;
 
 import java.security.Principal;
+import java.util.Base64;
 
 @Service
 public class AuthService {
@@ -36,6 +42,8 @@ public class AuthService {
     private final PostRepository postRepository;
     private final GlobalSettingsRepository globalSettingsRepository;
     private final CaptchaCodesRepository captchaCodesRepository;
+    @Value("${authService.captchaDeleteHours}")
+    private static int captchaDeleteHours;
 
     @Autowired
     public AuthService(AuthenticationManager authenticationManager, UserRepository userRepository, PostRepository postRepository, GlobalSettingsRepository globalSettingsRepository, CaptchaCodesRepository captchaCodesRepository) {
@@ -90,8 +98,30 @@ public class AuthService {
         return ResponseEntity.ok(getLoginResponse(principal.getName()));
     }
 
-    public AuthCaptchaResponse getCaptcha() {
-        return new AuthCaptchaResponse("car4y8cryaw84cr89awnrc", "data:image/png;base64, код_изображения_в_base64");
+    @Transactional
+    public ResponseEntity<AuthCaptchaResponse> getCaptcha() {
+        AuthCaptchaResponse authCaptchaResponse = new AuthCaptchaResponse();
+        Painter painter = new Painter(100, 35, null, null, null, null);
+        Cage cage = new Cage(painter, null, null, "png",0.5f,null,null);
+
+        String code = cage.getTokenGenerator().next();
+        String secretCode = SecurityConfig.passwordEncoder().encode(code);
+        String imageString = "data:image/png;base64, " + Base64.getEncoder().encodeToString(cage.draw(code));
+
+        authCaptchaResponse.setSecret(secretCode);
+        authCaptchaResponse.setImage(imageString);
+
+        //Удаляем устаревшие капчи
+        captchaCodesRepository.deleteOldCaptcha(captchaDeleteHours);
+
+        CaptchaCodes captchaCodes = new CaptchaCodes();
+        captchaCodes.setCode(code);
+        captchaCodes.setSecretCode(secretCode);
+        captchaCodes.setTime(DateHelper.getCurrentDate().getTime());
+
+        captchaCodesRepository.save(captchaCodes);
+
+        return ResponseEntity.ok(authCaptchaResponse);
     }
 
     public AuthLogoutResponse logout() {
@@ -178,6 +208,8 @@ public class AuthService {
         user.setPassword(SecurityConfig
                 .passwordEncoder()
                 .encode(registerRequest.getPassword()));
+
+        userRepository.save(user);
         return ResponseEntity.ok(registerResponse);
     }
 }
