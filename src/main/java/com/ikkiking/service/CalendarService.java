@@ -1,10 +1,12 @@
 package com.ikkiking.service;
 
 import com.ikkiking.api.response.CalendarResponse;
+import com.ikkiking.base.DateHelper;
 import com.ikkiking.model.Post;
 import com.ikkiking.repository.CalendarCustom;
 import com.ikkiking.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -13,13 +15,17 @@ import java.util.*;
 @Service
 public class CalendarService {
 
-    @Autowired
     private PostRepository postRepository;
 
-    public CalendarResponse getCalendar(int year) {
+    @Autowired
+    public CalendarService(PostRepository postRepository) {
+        this.postRepository = postRepository;
+    }
 
+    public ResponseEntity<CalendarResponse> getCalendar(int year) {
+        CalendarResponse calendarResponse = new CalendarResponse();
         if (year == 0) {
-            year = Calendar.getInstance(TimeZone.getTimeZone("UTC")).get(Calendar.YEAR);
+            year = DateHelper.getCurrentDate().get(Calendar.YEAR);
         }
 
         List<CalendarCustom> posts = postRepository.findPostDates(year);
@@ -33,9 +39,9 @@ public class CalendarService {
                 postsMap.put(t.getDate(), t.getAmount());
             });
         }
-
-        CalendarResponse calendarResponse = new CalendarResponse(years, postsMap);
-        return calendarResponse;
+        calendarResponse.setYears(years);
+        calendarResponse.setPosts(postsMap);
+        return ResponseEntity.ok(calendarResponse);
     }
 
 }

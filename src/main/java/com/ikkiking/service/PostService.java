@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -123,7 +124,7 @@ public class PostService {
     }
 
     //Получение постов
-    public GetPostResponse getPosts(int limit, int offset, String mode) {
+    public ResponseEntity<GetPostResponse> getPosts(int limit, int offset, String mode) {
 
         Page<Post> postPage = getPostFromDb(postRepository, limit, offset, mode);
 
@@ -131,16 +132,16 @@ public class PostService {
 
         enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
-        return postResponse;
+        return ResponseEntity.ok(postResponse);
     }
 
     //Получение списка постов по строке поиска
-    public SearchPostResponse searchPosts(int limit, int offset, String query) {
+    public ResponseEntity<SearchPostResponse> searchPosts(int limit, int offset, String query) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
         Page<Post> postPage;
 
-        if (query.trim().isEmpty() || query == null) {
+        if (query.isEmpty() || query == null) {
             postPage = postRepository.findAll(sortedByMode);
         } else {
             postPage = postRepository.findAllBySearch(sortedByMode, query);
@@ -151,11 +152,11 @@ public class PostService {
 
         enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
-        return postResponse;
+        return ResponseEntity.ok(postResponse);
     }
 
     //Получение постов по указанной дате
-    public PostByDateResponse getPostsByDate(int limit, int offset, String date) {
+    public ResponseEntity<PostByDateResponse> getPostsByDate(int limit, int offset, String date) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
@@ -165,11 +166,11 @@ public class PostService {
 
         enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
-        return postResponse;
+        return ResponseEntity.ok(postResponse);
     }
 
     //Получение постов по тэгу
-    public PostByTagResponse getPostsByTag(int limit, int offset, String tag) {
+    public ResponseEntity<PostByTagResponse> getPostsByTag(int limit, int offset, String tag) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
@@ -179,11 +180,11 @@ public class PostService {
 
         enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
-        return postResponse;
+        return ResponseEntity.ok(postResponse);
     }
 
     //Получение постов для модерации
-    public PostForModerationResponse getPostsForModeration(int limit, int offset, String status) {
+    public ResponseEntity<PostForModerationResponse> getPostsForModeration(int limit, int offset, String status) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
@@ -195,11 +196,11 @@ public class PostService {
 
         enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
-        return postResponse;
+        return ResponseEntity.ok(postResponse);
     }
 
     //Получение списка своих постов
-    public MyPostResponse getMyPosts(int limit, int offset, String status) {
+    public ResponseEntity<MyPostResponse> getMyPosts(int limit, int offset, String status) {
 
         Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
 
@@ -233,16 +234,21 @@ public class PostService {
 
         enrichPost(postVoteRepository, postCommentsRepository, postPage, postResponse);
 
-        return postResponse;
+        return ResponseEntity.ok(postResponse);
     }
 
     //Получение поста по ID
-    public PostByIdResponse getPostByid(long id) {
-        PostByIdResponse postByIdResponse = null;
+    public ResponseEntity<PostByIdResponse> getPostByid(long id) {
+        PostByIdResponse postByIdResponse = new PostByIdResponse();
 
         Optional<Post> postOptional = postRepository.findById(id);
 
-        if (postOptional.isPresent()) {
+        if (!postOptional.isPresent()) {
+
+            return new ResponseEntity<>(postByIdResponse, HttpStatus.NOT_FOUND);
+
+        } else {
+
             Post post = postOptional.get();
 
             Long postId = post.getId();
@@ -300,15 +306,13 @@ public class PostService {
                     tagStrList
             );
 
-
             //Увеличиваем кол-во просмотров на 1
             if (isIncrementViewCount(post.getUser())) {
                 post.setViewCount(post.getViewCount() + 1);
                 postRepository.save(post);
             }
+            return ResponseEntity.ok(postByIdResponse);
         }
-
-        return postByIdResponse;
     }
 
     //Метод определяет, надо ли увеличивать счётчик просмотров поста
@@ -367,9 +371,9 @@ public class PostService {
             post.setModerationStatus(ModerationStatus.NEW);
 
             //Если юзер является модератором или предмодерация отключена, пост сразу становится принят
-            if (!SettingsService.getSettingsValue(globalSettingsRepository, "POST_PREMODERATION") || user.isModerator()){
+            if (!SettingsService.getSettingsValue(globalSettingsRepository, "POST_PREMODERATION") || user.isModerator()) {
                 post.setModerationStatus(ModerationStatus.ACCEPTED);
-            }else{
+            } else {
                 post.setModerationStatus(ModerationStatus.NEW);
             }
 
