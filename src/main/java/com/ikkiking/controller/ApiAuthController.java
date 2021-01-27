@@ -1,11 +1,15 @@
 package com.ikkiking.controller;
 
 import com.ikkiking.api.request.LoginRequest;
+import com.ikkiking.api.request.PasswordRequest;
 import com.ikkiking.api.request.RegisterRequest;
+import com.ikkiking.api.request.RestoreRequest;
 import com.ikkiking.api.response.AuthResponse.AuthCaptchaResponse;
 import com.ikkiking.api.response.AuthResponse.AuthLogoutResponse;
 import com.ikkiking.api.response.LoginResponse;
+import com.ikkiking.api.response.PasswordResponse;
 import com.ikkiking.api.response.RegisterResponse;
+import com.ikkiking.api.response.RestoreResponse;
 import com.ikkiking.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,14 +38,13 @@ public class ApiAuthController {
         return authService.check(principal);
     }
 
-
    @GetMapping("/captcha")
    public ResponseEntity<AuthCaptchaResponse> getCaptcha(){
        return authService.getCaptcha();
    }
 
     @GetMapping("/logout")
-    public AuthLogoutResponse logout(){
+    public ResponseEntity<AuthLogoutResponse> logout(){
         return authService.logout();
     }
 
@@ -49,4 +52,16 @@ public class ApiAuthController {
     public ResponseEntity<RegisterResponse> register(@RequestBody RegisterRequest registerRequest){
         return authService.register(registerRequest);
     }
+
+    @PostMapping("/restore")
+    public ResponseEntity<RestoreResponse> register(@RequestBody RestoreRequest restoreRequest){
+        return authService.restore(restoreRequest);
+    }
+
+    @PostMapping("/password")
+    public ResponseEntity<PasswordResponse> password(@RequestBody PasswordRequest passwordRequest){
+        return authService.password(passwordRequest);
+    }
+
+
 }

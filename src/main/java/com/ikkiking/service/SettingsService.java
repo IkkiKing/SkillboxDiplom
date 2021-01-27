@@ -6,6 +6,7 @@ import com.ikkiking.api.response.SettingsResponse;
 import com.ikkiking.model.GlobalSettings;
 import com.ikkiking.repository.GlobalSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -19,7 +20,7 @@ public class SettingsService {
     @Autowired
     private GlobalSettingsRepository globalSettingsRepository;
 
-    public SettingsResponse getGlobalSettings() {
+    public ResponseEntity<SettingsResponse> getGlobalSettings() {
 
         SettingsResponse settingsResponse = new SettingsResponse();
 
@@ -27,7 +28,7 @@ public class SettingsService {
         settingsResponse.setMultiUserMode(getSettingsValue(globalSettingsRepository, "POST_PREMODERATION"));
         settingsResponse.setPostPremoderation(getSettingsValue(globalSettingsRepository, "STATISTICS_IS_PUBLIC"));
 
-        return settingsResponse;
+        return ResponseEntity.ok(settingsResponse);
     }
 
     public static boolean getSettingsValue(GlobalSettingsRepository globalSettingsRepository,

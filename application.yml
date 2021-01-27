@@ -11,8 +11,21 @@ blog.email: mail@mail.ru
 blog.copyright: Дмитрий Сергеев
 blog.copyrightFrom: 2005
 
-authService.captchaDeleteHours: 1;
+authService.captchaDeleteHours: 1
 
 spring.servlet.multipart.max-file-size: 10MB
 spring.servlet.multipart.max-request-size: 10MB
+
 image.filepath : src/main/resources/upload
+
+avatar.filePath : src/main/resources/upload/avatar
+avatar.fileSize : 5
+
+
+spring.mail.host: smtp.gmail.com
+spring.mail.port: 587
+spring.mail.username: DeveloperSmelovEA
+spring.mail.password: DevelopSomething
+spring.mail.properties.mail.smtp.auth: true
+spring.mail.properties.mail.smtp.starttls.enable: true
+spring.mail.properties.mail.smtp.starttls.required: true
