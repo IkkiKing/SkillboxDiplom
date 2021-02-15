@@ -68,6 +68,7 @@ public class AuthService {
 
     //Метод получения логина-ответа
     private LoginResponse getLoginResponse(String email) {
+
         com.ikkiking.model.User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(email));
 
@@ -232,9 +233,6 @@ public class AuthService {
         user.setRegTime(DateHelper.getCurrentDate().getTime());
         user.setName(registerRequest.getName());
         user.setEmail(registerRequest.getEmail());
-        /*TODO:
-         * проверить как кодируется пароль
-         * */
         user.setPassword(SecurityConfig
                 .passwordEncoder()
                 .encode(registerRequest.getPassword()));

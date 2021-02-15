@@ -37,7 +37,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllByDate(Pageable pageable, String date);
 
     @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate() " +
-            "and EXISTS(SELECT 1 FROM tag2Post tp, tags t where tp.post_id = p.id and tp.tag_id = t.id and t.name = :tag)",
+            "and EXISTS(SELECT 1 FROM tag2post tp, tags t where tp.post_id = p.id and tp.tag_id = t.id and t.name = :tag)",
             nativeQuery = true)
     Page<Post> findAllByTag(Pageable pageable, String tag);
 
@@ -57,7 +57,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "where YEAR(p.time) = :year and p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate()  " +
             "group by year, date order by date",
             nativeQuery = true)
-    List<CalendarCustom> findPostDates(int year);
+    List<CalendarCustom> findPostByYear(int year);
+
+    @Query(value = "select DISTINCT YEAR(p.time) from posts p order by p.time desc", nativeQuery = true)
+    List<Integer> findYears();
 
     @Query(value = "select count(p.id) as postsCount," +
             "       sum((select count(pv.id)" +

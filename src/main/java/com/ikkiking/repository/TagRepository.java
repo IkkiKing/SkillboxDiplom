@@ -19,7 +19,7 @@ public interface TagRepository extends CrudRepository<Tag, Integer> {
                           "(select count(*) from tag2post t2p where t2p.tag_id = t.id) / " +
                           "(select count(*) from posts p where p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate()) as weight " +
                     "from tags t " +
-                    "where (:query is null or t.name = :query) group by t.name",
+                    "where (:query is null or t.name = :query) group by t.id",
     nativeQuery = true)
     List<TagCustom> findAllByTags(String query);
 

@@ -78,7 +78,7 @@ public class ApiPostController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PostByIdResponse> getPostById(@PathVariable long id) {
-        return postService.getPostByid(id);
+        return postService.getPostById(id);
     }
 
     @PostMapping
