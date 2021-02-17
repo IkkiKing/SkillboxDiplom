@@ -2,6 +2,7 @@ package com.ikkiking.repository;
 
 
 import com.ikkiking.model.Tag;
+import com.ikkiking.model.Tag2Post;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -29,4 +30,6 @@ public interface TagRepository extends CrudRepository<Tag, Integer> {
 
     @Query(value = "select t.* from tags t where t.name = :name", nativeQuery = true)
     Optional<Tag> findByName(String name);
+
+    List<Tag> findAllByNameIn(List<String> tags);
 }

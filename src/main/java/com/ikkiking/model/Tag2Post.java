@@ -1,12 +1,16 @@
 package com.ikkiking.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 @Data
 @Entity(name = "tag2post")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Tag2Post {
 
     @Id

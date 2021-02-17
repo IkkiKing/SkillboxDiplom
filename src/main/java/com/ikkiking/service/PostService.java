@@ -10,6 +10,7 @@ import com.ikkiking.base.DateHelper;
 import com.ikkiking.base.exception.PostNotFoundException;
 import com.ikkiking.model.*;
 import com.ikkiking.repository.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,12 +19,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class PostService {
 
     private final PostRepository postRepository;
@@ -66,6 +69,8 @@ public class PostService {
         Page<Post> posts;
 
         int page = getPageByOffsetAndLimit(limit, offset);
+
+        log.info("Posts request by mode: " + mode + ". Offset is " + offset + ". Limit is " + limit);
 
         switch (mode) {
             case "early": {
@@ -227,7 +232,12 @@ public class PostService {
 
         String email = ContextUser.getEmailFromContext();
 
-        Page<Post> postPage = postRepository.findAllForModeration(sortedByMode, email, status);
+        Page<Post> postPage;
+        if (status.equalsIgnoreCase(ModerationStatus.NEW.toString())) {
+            postPage = postRepository.findAllForModeration(sortedByMode, status);
+        } else {
+            postPage = postRepository.findAllMyModeration(sortedByMode, email, status);
+        }
 
         PostForModerationResponse postResponse = new PostForModerationResponse();
 
@@ -360,7 +370,7 @@ public class PostService {
                 isIncrementViewCount = false;
             }
         } catch (UsernameNotFoundException ex) {
-            //TODO : Logging
+            log.info("User unauthorized found, increment views");
         }
 
         return isIncrementViewCount;
@@ -389,11 +399,15 @@ public class PostService {
             postPutResponse.setErrors(new PostErrorResponse(title, text));
 
             isCorrectPost = false;
+
+            log.warn("Post is not correct");
         }
+
         return isCorrectPost;
     }
 
     //Добавляем пост
+    @Transactional
     public ResponseEntity<PostReturnResponse> addPost(PostRequest postRequest) {
 
         PostReturnResponse postPutResponse = new PostReturnResponse();
@@ -436,37 +450,26 @@ public class PostService {
                                Long postId) {
 
         if (tags != null) {
-            tags.forEach(t -> {
 
-                Optional<Tag> tagOptional = tagRepository.findByName(t);
+            //Список добавляемых к посту тэгов
+            List<Tag> tagList = tagRepository.findAllByNameIn(tags);
 
-                Tag tag;
+            tag2PostRepository.deleteAllByPostId(postId);
 
-                if (tagOptional.isPresent()) {
+            List<Tag2Post> tag2PostList = tagList.stream().map(m ->
+                    {
+                        Tag2Post tag2Post = new Tag2Post();
+                        tag2Post.setTagId(m.getId());
+                        tag2Post.setPostId(postId);
+                        return tag2Post;
+                    }
+            ).collect(Collectors.toList());
 
-                    tag = tagOptional.get();
-
-                } else {
-
-                    tag = new Tag();
-                    tag.setName(t);
-                    tag = tagRepository.save(tag);
-
-                }
-
-                Tag2Post tag2Post = new Tag2Post();
-                tag2Post.setPostId(postId);
-                tag2Post.setTagId(tag.getId());
-
-                //Если нету связки поста с тэгом, то добавляем  её
-                if (tag2PostRepository.countByTagIdAndPostId(tag.getId(), postId) == 0) {
-                    tag2PostRepository.save(tag2Post);
-                }
-
-            });
+            tag2PostRepository.saveAll(tag2PostList);
         }
     }
 
+    @Transactional
     public ResponseEntity<PostReturnResponse> editPost(long postId, PostRequest postRequest) {
         PostReturnResponse postPutResponse = new PostReturnResponse();
 
@@ -484,7 +487,6 @@ public class PostService {
             post.setActive(postRequest.getActive() == 1);
             post.setTitle(postRequest.getTitle());
             post.setText(postRequest.getText());
-
             postRepository.save(post);
 
             setTagsToPost(postRequest.getTags(), postId);
@@ -511,6 +513,8 @@ public class PostService {
         Optional<Post> postOptional = postRepository.findById(voteRequest.getPostId());
         //Если пост не найден в БД, дальше делать нечего
         if (!postOptional.isPresent()) {
+            log.warn("Post not found in DB");
+
             voteResponse.setResult(false);
             return voteResponse;
         }
@@ -526,6 +530,8 @@ public class PostService {
 
             //Если ранее был уже поставлен аналогичный Vote
             if (postVote.getValue() == value) {
+                log.warn("Vote already setted");
+
                 voteResponse.setResult(false);
             } else {
                 postVote.setValue(value);

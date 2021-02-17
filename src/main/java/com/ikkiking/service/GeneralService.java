@@ -6,6 +6,8 @@ import com.ikkiking.api.response.*;
 import com.ikkiking.api.response.StatisticResponse.StatisticResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.ImageUtil;
+import com.ikkiking.base.exception.SettingNotFoundException;
+import com.ikkiking.base.exception.StatisticAccessException;
 import com.ikkiking.config.SecurityConfig;
 import com.ikkiking.model.GlobalSettings;
 import com.ikkiking.model.ModerationStatus;
@@ -15,8 +17,8 @@ import com.ikkiking.repository.GlobalSettingsRepository;
 import com.ikkiking.repository.PostRepository;
 import com.ikkiking.repository.StatisticCustom;
 import com.ikkiking.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ import java.util.Optional;
 
 
 @Service
+@Slf4j
 public class GeneralService {
 
     private final PostRepository postRepository;
@@ -55,6 +58,7 @@ public class GeneralService {
 
     private StatisticResponse getStatisticResponse(StatisticCustom statistic) {
         if (statistic.getPostsCount() == 0) {
+            log.info("Posts count equal zero");
             return new StatisticResponse(
                     0l,
                     0l,
@@ -84,18 +88,15 @@ public class GeneralService {
 
         User user = ContextUser.getUserFromContext(userRepository);
 
-        Optional<GlobalSettings> globalSettings = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC");
+        GlobalSettings globalSettings = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC").orElseThrow(
+                () -> new SettingNotFoundException("Check statistic settings")
+        );
 
-        if (globalSettings.isPresent()) {
-            //В случае если публичный показ статистики запрещен и юзер не модератор
-            if (globalSettings.get().getValue().equals("NO") && !user.isModerator()) {
-                return new ResponseEntity<>(new StatisticResponse(), HttpStatus.UNAUTHORIZED);
-            }
 
-        } else {
-            /*TODO: Exception?*/
+        //В случае если публичный показ статистики запрещен и юзер не модератор
+        if (globalSettings.getValue().equals("NO") && !user.isModerator()) {
+            throw new StatisticAccessException("Statistic is not public!");
         }
-
         StatisticCustom statisticCustom = postRepository.findAllStatistic();
 
         return ResponseEntity.ok(getStatisticResponse(statisticCustom));
@@ -126,13 +127,13 @@ public class GeneralService {
             moderationResponse.setResult(true);
 
             Post post = postOptional.get();
-            post.setUser(user);
+            post.setModerator(user);
             post.setModerationStatus(moderationStatus);
             postRepository.save(post);
 
         } else {
+            log.warn("post from moderation request wasnt found or already moderated");
             moderationResponse.setResult(false);
-            /*TODO: Exception?*/
         }
         return ResponseEntity.ok(moderationResponse);
     }
@@ -151,6 +152,7 @@ public class GeneralService {
         );
 
         if (imageUtil.getFormatName().equals("unknown")) {
+            log.error("Unknown image format file");
             imageResponse.setErrors(new ImageErrorResponse("Выбран не поддерживаемый тип файла"));
             return new ResponseEntity<>(imageResponse, HttpStatus.BAD_REQUEST);
         }
@@ -159,6 +161,7 @@ public class GeneralService {
             imageUtil.uploadImage();
             imageResponse.setResult(true);
         } catch (IOException ex) {
+            log.error("Error file uploading");
             imageResponse.setResult(false);
             imageResponse.setErrors(new ImageErrorResponse("Ошибка загрузки файла на сервер"));
             return new ResponseEntity<>(imageResponse, HttpStatus.BAD_REQUEST);
@@ -187,14 +190,16 @@ public class GeneralService {
                 avatarDir
         );
 
-        System.out.println(maxFileSize);
         if (photo.getSize() / 1_000_000 > maxFileSize) {
+            log.warn("photo size is over limit");
+
             profileErrorResponse.setPhoto("Файл превышает допустимый размер " + maxFileSize + " Мб");
             profileResponse.setResult(false);
 
         } else {
 
             if (imageUtil.getFormatName().equals("unknown")) {
+                log.warn("photo format is unknown");
                 profileErrorResponse.setPhoto("Выбран не поддерживаемый тип файла");
                 profileResponse.setResult(false);
             } else {
@@ -202,6 +207,7 @@ public class GeneralService {
                 try {
                     imageUtil.uploadAvatar();
                 } catch (IOException ex) {
+                    log.error("Error photo uploading");
                     profileErrorResponse.setPhoto("Ошибка загрузки файла на сервер");
                     profileResponse.setResult(false);
                     ex.printStackTrace();

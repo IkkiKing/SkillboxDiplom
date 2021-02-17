@@ -42,10 +42,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAllByTag(Pageable pageable, String tag);
 
 
+    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = upper(:status)",
+            nativeQuery = true)
+    Page<Post> findAllForModeration(Pageable pageable, String status);
+
     @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = upper(:status)" +
             "and exists (select 1 from users u where u.id = p.moderator_id and u.email = :email)",
             nativeQuery = true)
-    Page<Post> findAllForModeration(Pageable pageable, String email, String status);
+    Page<Post> findAllMyModeration(Pageable pageable, String email, String status);
 
     @Query(value = "SELECT * FROM posts p WHERE p.is_active = :isActive and (:moderationStatus is null or p.moderation_status = :moderationStatus) " +
             "and exists (select 1 from users u where u.id = p.user_id and u.email = :email)",

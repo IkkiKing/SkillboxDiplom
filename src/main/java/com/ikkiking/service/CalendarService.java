@@ -4,6 +4,7 @@ import com.ikkiking.api.response.CalendarResponse;
 import com.ikkiking.base.DateHelper;
 import com.ikkiking.repository.CalendarCustom;
 import com.ikkiking.repository.PostRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 
 
 @Service
+@Slf4j
 public class CalendarService {
 
     private PostRepository postRepository;
@@ -25,6 +27,7 @@ public class CalendarService {
     public ResponseEntity<CalendarResponse> getCalendar(int year) {
         CalendarResponse calendarResponse = new CalendarResponse();
         if (year == 0) {
+            log.info("The year was setted as default");
             year = DateHelper.getCurrentDate().get(Calendar.YEAR);
         }
 
