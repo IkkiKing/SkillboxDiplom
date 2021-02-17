@@ -10,16 +10,17 @@ import com.ikkiking.api.response.*;
 import com.ikkiking.api.response.AuthResponse.AuthCaptchaResponse;
 import com.ikkiking.api.response.AuthResponse.AuthLogoutResponse;
 import com.ikkiking.base.DateHelper;
+import com.ikkiking.base.exception.RegistrationClosedException;
 import com.ikkiking.config.SecurityConfig;
 import com.ikkiking.model.CaptchaCodes;
 import com.ikkiking.repository.CaptchaCodesRepository;
 import com.ikkiking.repository.GlobalSettingsRepository;
 import com.ikkiking.repository.PostRepository;
 import com.ikkiking.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,12 +32,12 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.security.Principal;
 import java.util.Base64;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
@@ -45,7 +46,7 @@ public class AuthService {
     private final GlobalSettingsRepository globalSettingsRepository;
     private final CaptchaCodesRepository captchaCodesRepository;
 
-    private JavaMailSender emailSender;
+    private final JavaMailSender emailSender;
 
     @Value("${authService.captchaDeleteHours}")
     private static int captchaDeleteHours;
@@ -68,6 +69,7 @@ public class AuthService {
 
     //Метод получения логина-ответа
     private LoginResponse getLoginResponse(String email) {
+
         com.ikkiking.model.User currentUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(email));
 
@@ -110,7 +112,9 @@ public class AuthService {
         if (principal == null) {
             return ResponseEntity.ok(new LoginResponse());
         }
-        return ResponseEntity.ok(getLoginResponse(principal.getName()));
+        return ResponseEntity.ok(
+                getLoginResponse(principal.getName())
+        );
     }
 
     @Transactional
@@ -150,6 +154,7 @@ public class AuthService {
 
         captchaCodesRepository.save(captchaCodes);
 
+        log.info("Captcha code is: " + code + ". Secret code is: " + secretCode);
         return ResponseEntity.ok(authCaptchaResponse);
     }
 
@@ -209,8 +214,7 @@ public class AuthService {
         return result;
     }
 
-    public ResponseEntity<RegisterResponse> register
-            (RegisterRequest registerRequest) {
+    public ResponseEntity<RegisterResponse> register(RegisterRequest registerRequest) {
         RegisterResponse registerResponse = new RegisterResponse();
         registerResponse.setResult(true);
 
@@ -218,13 +222,15 @@ public class AuthService {
 
         //Если регистрация закрыта
         if (!SettingsService.getSettingsValue(globalSettingsRepository, "MULTIUSER_MODE")) {
-            return new ResponseEntity<>(registerResponse, HttpStatus.NOT_FOUND);
+            throw new RegistrationClosedException("Register is closed");
         }
 
         //Если запрос некорректный
         if (!isValidRegisterRequest(registerRequest, registerErrorResponse)) {
             registerResponse.setResult(false);
             registerResponse.setErrors(registerErrorResponse);
+
+            log.warn("Unsuccessfull registerRequest");
             return ResponseEntity.ok(registerResponse);
         }
         com.ikkiking.model.User user = new com.ikkiking.model.User();
@@ -232,9 +238,6 @@ public class AuthService {
         user.setRegTime(DateHelper.getCurrentDate().getTime());
         user.setName(registerRequest.getName());
         user.setEmail(registerRequest.getEmail());
-        /*TODO:
-         * проверить как кодируется пароль
-         * */
         user.setPassword(SecurityConfig
                 .passwordEncoder()
                 .encode(registerRequest.getPassword()));
@@ -247,6 +250,7 @@ public class AuthService {
         RestoreResponse restoreResponse = new RestoreResponse(false);
 
         Optional<com.ikkiking.model.User> userOptional = userRepository.findByEmail(restoreRequest.getEmail());
+
         if (userOptional.isPresent()) {
             com.ikkiking.model.User user = userOptional.get();
             String userCode = RandomStringUtils.random(40, true, true);
@@ -257,7 +261,9 @@ public class AuthService {
                     "Восстановление пароля DevPub",
                     "Для восстановления вашего пароля, пройдите по ссылке " +
                             "http://localhost:8080/login/change-password/" + userCode);
-
+            log.info("Email was sended!");
+        }else{
+            log.warn("User not found. Email wasnt sended.");
         }
 
         return ResponseEntity.ok(restoreResponse);
@@ -298,6 +304,8 @@ public class AuthService {
 
         Optional<com.ikkiking.model.User> userOptional = userRepository.findByCode(code);
         if (!userOptional.isPresent()) {
+            log.warn("The link for restore password is too old.");
+
             passwordErrorResponse.setCode("Ссылка для восстановления пароля устарела." +
                     "<a href =\"/auth/restore\">Запросить ссылку снова</a>");
         } else {

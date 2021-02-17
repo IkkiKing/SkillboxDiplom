@@ -9,6 +9,6 @@ public class SettingsResponse {
     private boolean multiUserMode;
     @JsonProperty("POST_PREMODERATION")
     private boolean postPremoderation;
-    @JsonProperty("STATISTIC_IS_PUBLIC")
-    private boolean statisticIsPublic;
+    @JsonProperty("STATISTICS_IS_PUBLIC")
+    private boolean statisticsIsPublic;
 }

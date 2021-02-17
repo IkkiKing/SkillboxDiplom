@@ -7,22 +7,26 @@ import com.ikkiking.api.response.PostResponse.*;
 import com.ikkiking.api.response.VoteResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.DateHelper;
+import com.ikkiking.base.exception.PostNotFoundException;
 import com.ikkiking.model.*;
 import com.ikkiking.repository.*;
-import org.hibernate.type.descriptor.java.DataHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class PostService {
 
     private final PostRepository postRepository;
@@ -34,7 +38,13 @@ public class PostService {
     private final GlobalSettingsRepository globalSettingsRepository;
 
     @Autowired
-    public PostService(PostRepository postRepository, PostVoteRepository postVoteRepository, PostCommentsRepository postCommentsRepository, TagRepository tagRepository, Tag2PostRepository tag2PostRepository, UserRepository userRepository, GlobalSettingsRepository globalSettingsRepository) {
+    public PostService(PostRepository postRepository,
+                       PostVoteRepository postVoteRepository,
+                       PostCommentsRepository postCommentsRepository,
+                       TagRepository tagRepository,
+                       Tag2PostRepository tag2PostRepository,
+                       UserRepository userRepository,
+                       GlobalSettingsRepository globalSettingsRepository) {
         this.postRepository = postRepository;
         this.postVoteRepository = postVoteRepository;
         this.postCommentsRepository = postCommentsRepository;
@@ -42,6 +52,11 @@ public class PostService {
         this.tag2PostRepository = tag2PostRepository;
         this.userRepository = userRepository;
         this.globalSettingsRepository = globalSettingsRepository;
+    }
+
+    private static int getPageByOffsetAndLimit(int limit,
+                                               int offset) {
+        return offset / limit;
     }
 
     //Получение постов по переданному типу
@@ -53,25 +68,29 @@ public class PostService {
         Pageable sortedByMode;
         Page<Post> posts;
 
+        int page = getPageByOffsetAndLimit(limit, offset);
+
+        log.info("Posts request by mode: " + mode + ". Offset is " + offset + ". Limit is " + limit);
+
         switch (mode) {
             case "early": {
-                sortedByMode = PageRequest.of(offset, limit, Sort.by("time").ascending());
+                sortedByMode = PageRequest.of(page, limit, Sort.by("time").ascending());
                 posts = postRepository.findAll(sortedByMode);
                 break;
             }
             case "popular": {
-                sortedByMode = PageRequest.of(offset, limit);
+                sortedByMode = PageRequest.of(page, limit);
                 posts = postRepository.findAllByPopular(sortedByMode);
                 break;
             }
             case "best": {
-                sortedByMode = PageRequest.of(offset, limit);
+                sortedByMode = PageRequest.of(page, limit);
                 posts = postRepository.findAllByBest(sortedByMode);
                 break;
             }
             //RECENT
             default: {
-                sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+                sortedByMode = PageRequest.of(page, limit, Sort.by("time").descending());
                 posts = postRepository.findAll(sortedByMode);
                 break;
             }
@@ -98,8 +117,8 @@ public class PostService {
                 long viewCount = t.getViewCount();
                 long timestamp = t.getTime().getTime() / 1000L;
 
-                long likesCount = postVoteRepository.countLikesByPost(t);
-                long dislikesCount = postVoteRepository.countDislikesByPost(t);
+                long likesCount = postVoteRepository.countLikesByPost(postId);
+                long dislikesCount = postVoteRepository.countDislikesByPost(postId);
                 long commentCount = postCommentsRepository.countCommentsByPost(t);
 
                 String title = t.getTitle();
@@ -124,7 +143,9 @@ public class PostService {
     }
 
     //Получение постов
-    public ResponseEntity<GetPostResponse> getPosts(int limit, int offset, String mode) {
+    public ResponseEntity<GetPostResponse> getPosts(int limit,
+                                                    int offset,
+                                                    String mode) {
 
         Page<Post> postPage = getPostFromDb(postRepository, limit, offset, mode);
 
@@ -136,9 +157,16 @@ public class PostService {
     }
 
     //Получение списка постов по строке поиска
-    public ResponseEntity<SearchPostResponse> searchPosts(int limit, int offset, String query) {
+    public ResponseEntity<SearchPostResponse> searchPosts(int limit,
+                                                          int offset,
+                                                          String query) {
 
-        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+        Pageable sortedByMode = PageRequest.of(
+                getPageByOffsetAndLimit(limit, offset),
+                limit,
+                Sort.by("time").descending()
+        );
+
         Page<Post> postPage;
 
         if (query.isEmpty() || query == null) {
@@ -146,7 +174,6 @@ public class PostService {
         } else {
             postPage = postRepository.findAllBySearch(sortedByMode, query);
         }
-
 
         SearchPostResponse postResponse = new SearchPostResponse();
 
@@ -156,9 +183,14 @@ public class PostService {
     }
 
     //Получение постов по указанной дате
-    public ResponseEntity<PostByDateResponse> getPostsByDate(int limit, int offset, String date) {
+    public ResponseEntity<PostByDateResponse> getPostsByDate(int limit,
+                                                             int offset,
+                                                             String date) {
 
-        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+        Pageable sortedByMode = PageRequest.of(
+                getPageByOffsetAndLimit(limit, offset),
+                limit,
+                Sort.by("time").descending());
 
         Page<Post> postPage = postRepository.findAllByDate(sortedByMode, date);
 
@@ -170,9 +202,14 @@ public class PostService {
     }
 
     //Получение постов по тэгу
-    public ResponseEntity<PostByTagResponse> getPostsByTag(int limit, int offset, String tag) {
-
-        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+    public ResponseEntity<PostByTagResponse> getPostsByTag(int limit,
+                                                           int offset,
+                                                           String tag) {
+        Pageable sortedByMode = PageRequest.of(
+                getPageByOffsetAndLimit(limit, offset),
+                limit,
+                Sort.by("time").descending()
+        );
 
         Page<Post> postPage = postRepository.findAllByTag(sortedByMode, tag);
 
@@ -184,13 +221,23 @@ public class PostService {
     }
 
     //Получение постов для модерации
-    public ResponseEntity<PostForModerationResponse> getPostsForModeration(int limit, int offset, String status) {
-
-        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+    public ResponseEntity<PostForModerationResponse> getPostsForModeration(int limit,
+                                                                           int offset,
+                                                                           String status) {
+        Pageable sortedByMode = PageRequest.of(
+                getPageByOffsetAndLimit(limit, offset),
+                limit,
+                Sort.by("time").descending()
+        );
 
         String email = ContextUser.getEmailFromContext();
 
-        Page<Post> postPage = postRepository.findAllForModeration(sortedByMode, email, status);
+        Page<Post> postPage;
+        if (status.equalsIgnoreCase(ModerationStatus.NEW.toString())) {
+            postPage = postRepository.findAllForModeration(sortedByMode, status);
+        } else {
+            postPage = postRepository.findAllMyModeration(sortedByMode, email, status);
+        }
 
         PostForModerationResponse postResponse = new PostForModerationResponse();
 
@@ -200,9 +247,14 @@ public class PostService {
     }
 
     //Получение списка своих постов
-    public ResponseEntity<MyPostResponse> getMyPosts(int limit, int offset, String status) {
-
-        Pageable sortedByMode = PageRequest.of(offset, limit, Sort.by("time").descending());
+    public ResponseEntity<MyPostResponse> getMyPosts(int limit,
+                                                     int offset,
+                                                     String status) {
+        Pageable sortedByMode = PageRequest.of(
+                getPageByOffsetAndLimit(limit, offset),
+                limit,
+                Sort.by("time").descending()
+        );
 
         String email = ContextUser.getEmailFromContext();
 
@@ -228,7 +280,11 @@ public class PostService {
             }
         }
 
-        Page<Post> postPage = postRepository.findMyPosts(sortedByMode, email, isActive, moderationStatus);
+        Page<Post> postPage = postRepository.findMyPosts(
+                sortedByMode,
+                email,
+                isActive,
+                moderationStatus);
 
         MyPostResponse postResponse = new MyPostResponse();
 
@@ -238,81 +294,68 @@ public class PostService {
     }
 
     //Получение поста по ID
-    public ResponseEntity<PostByIdResponse> getPostByid(long id) {
-        PostByIdResponse postByIdResponse = new PostByIdResponse();
+    public ResponseEntity<PostByIdResponse> getPostById(long id) {
 
-        Optional<Post> postOptional = postRepository.findById(id);
+        Post post = postRepository.findById(id).orElseThrow(
+                () -> new PostNotFoundException("Пост не найден!"));
 
-        if (!postOptional.isPresent()) {
+        Long postId = post.getId();
+        long timestamp = post.getTime().getTime() / 1000L;
+        boolean isActive = post.isActive();
 
-            return new ResponseEntity<>(postByIdResponse, HttpStatus.NOT_FOUND);
+        UserResponse user = new UserResponse(
+                post.getUser().getId(),
+                post.getUser().getName()
+        );
 
-        } else {
+        String title = post.getTitle();
+        String text = post.getText();
 
-            Post post = postOptional.get();
+        long likesCount = postVoteRepository.countLikesByPost(postId);
+        long dislikesCount = postVoteRepository.countDislikesByPost(postId);
+        long viewCount = post.getViewCount();
 
-            Long postId = post.getId();
-            long timestamp = post.getTime().getTime() / 1000L;
-            boolean isActive = post.isActive();
+        List<PostComments> postCommentsList = postCommentsRepository.findAllByIPostId(postId);
+
+        List<CommentResponse> commentList = postCommentsList.stream()
+                .map(p -> new CommentResponse(
+                        p.getId(),
+                        p.getTime().getTime() / 1_000L,
+                        p.getText(),
+                        new CommentUserResponse(
+                                p.getUser().getId(),
+                                p.getUser().getName(),
+                                p.getUser().getPhoto())))
+                .collect(Collectors.toList());
 
 
-            UserResponse user = new UserResponse(post.getUser().getId(), post.getUser().getName());
-            String title = post.getTitle();
-            String text = post.getText();
-            long likesCount = postVoteRepository.countLikesByPost(post);
-            long dislikesCount = postVoteRepository.countDislikesByPost(post);
-            long viewCount = post.getViewCount();
+        List<Tag> tagList = tagRepository.findAllByPost(postId);
 
+        Set<String> tagStrList = tagList.stream()
+                .map(a -> a.getName())
+                .collect(Collectors.toSet());
 
-            List<PostComments> postCommentsList = postCommentsRepository.findAllByIPostId(postId);
-            List<CommentResponse> commentList = new ArrayList<>();
+        PostByIdResponse postByIdResponse = new PostByIdResponse(
+                post.getId(),
+                post.getTime().getTime() / 1000L,
+                post.isActive(),
+                user,
+                title,
+                text,
+                likesCount,
+                dislikesCount,
+                viewCount,
+                commentList,
+                tagStrList
+        );
 
-            postCommentsList.forEach(a -> {
-
-                CommentUserResponse commentUser = new CommentUserResponse(a.getUser().getId(),
-                        a.getUser().getName(),
-                        a.getUser().getPhoto());
-
-                CommentResponse comment = new CommentResponse(a.getId(),
-                        a.getTime().getTime() / 1000L,
-                        a.getText(),
-                        commentUser);
-
-                commentList.add(comment);
-            });
-
-            List<Tag> tagList = tagRepository.findAllByPost(postId);
-
-            Set<String> tagStrList = new HashSet<>();
-
-            //Тот же самый вопрос, нужна ли действительно проверка на null?
-            if (tagList != null) {
-                tagList.forEach(a -> {
-                    tagStrList.add(a.getName());
-                });
-
-            }
-
-            postByIdResponse = new PostByIdResponse(post.getId(),
-                    post.getTime().getTime() / 1000L,
-                    post.isActive(),
-                    user,
-                    title,
-                    text,
-                    likesCount,
-                    dislikesCount,
-                    viewCount,
-                    commentList,
-                    tagStrList
-            );
-
-            //Увеличиваем кол-во просмотров на 1
-            if (isIncrementViewCount(post.getUser())) {
-                post.setViewCount(post.getViewCount() + 1);
-                postRepository.save(post);
-            }
-            return ResponseEntity.ok(postByIdResponse);
+        //Увеличиваем кол-во просмотров на 1
+        if (isIncrementViewCount(post.getUser())) {
+            post.setViewCount(post.getViewCount() + 1);
+            postRepository.save(post);
         }
+
+        return ResponseEntity.ok(postByIdResponse);
     }
 
     //Метод определяет, надо ли увеличивать счётчик просмотров поста
@@ -320,10 +363,14 @@ public class PostService {
 
         boolean isIncrementViewCount = true;
 
-        User currentUser = ContextUser.getUserFromContext(userRepository);
+        try {
+            User currentUser = ContextUser.getUserFromContext(userRepository);
 
-        if (currentUser.isModerator() || (currentUser.getId() == user.getId())) {
-            isIncrementViewCount = false;
+            if (currentUser.isModerator() || (currentUser.getId() == user.getId())) {
+                isIncrementViewCount = false;
+            }
+        } catch (UsernameNotFoundException ex) {
+            log.info("User unauthorized found, increment views");
         }
 
         return isIncrementViewCount;
@@ -352,11 +399,15 @@ public class PostService {
             postPutResponse.setErrors(new PostErrorResponse(title, text));
 
             isCorrectPost = false;
+
+            log.warn("Post is not correct");
         }
+
         return isCorrectPost;
     }
 
     //Добавляем пост
+    @Transactional
     public ResponseEntity<PostReturnResponse> addPost(PostRequest postRequest) {
 
         PostReturnResponse postPutResponse = new PostReturnResponse();
@@ -399,37 +450,26 @@ public class PostService {
                                Long postId) {
 
         if (tags != null) {
-            tags.forEach(t -> {
 
-                Optional<Tag> tagOptional = tagRepository.findByName(t);
+            //Список добавляемых к посту тэгов
+            List<Tag> tagList = tagRepository.findAllByNameIn(tags);
 
-                Tag tag;
+            tag2PostRepository.deleteAllByPostId(postId);
 
-                if (tagOptional.isPresent()) {
+            List<Tag2Post> tag2PostList = tagList.stream().map(m ->
+                    {
+                        Tag2Post tag2Post = new Tag2Post();
+                        tag2Post.setTagId(m.getId());
+                        tag2Post.setPostId(postId);
+                        return tag2Post;
+                    }
+            ).collect(Collectors.toList());
 
-                    tag = tagOptional.get();
-
-                } else {
-
-                    tag = new Tag();
-                    tag.setName(t);
-                    tag = tagRepository.save(tag);
-
-                }
-
-                Tag2Post tag2Post = new Tag2Post();
-                tag2Post.setPostId(postId);
-                tag2Post.setTagId(tag.getId());
-
-                //Если нету связки поста с тэгом, то добавляем  её
-                if (tag2PostRepository.countByTagIdAndPostId(tag.getId(), postId) == 0) {
-                    tag2PostRepository.save(tag2Post);
-                }
-
-            });
+            tag2PostRepository.saveAll(tag2PostList);
         }
     }
 
+    @Transactional
     public ResponseEntity<PostReturnResponse> editPost(long postId, PostRequest postRequest) {
         PostReturnResponse postPutResponse = new PostReturnResponse();
 
@@ -447,7 +487,6 @@ public class PostService {
             post.setActive(postRequest.getActive() == 1);
             post.setTitle(postRequest.getTitle());
             post.setText(postRequest.getText());
-
             postRepository.save(post);
 
             setTagsToPost(postRequest.getTags(), postId);
@@ -474,6 +513,8 @@ public class PostService {
         Optional<Post> postOptional = postRepository.findById(voteRequest.getPostId());
         //Если пост не найден в БД, дальше делать нечего
         if (!postOptional.isPresent()) {
+            log.warn("Post not found in DB");
+
             voteResponse.setResult(false);
             return voteResponse;
         }
@@ -489,6 +530,8 @@ public class PostService {
 
             //Если ранее был уже поставлен аналогичный Vote
             if (postVote.getValue() == value) {
+                log.warn("Vote already setted");
+
                 voteResponse.setResult(false);
             } else {
                 postVote.setValue(value);

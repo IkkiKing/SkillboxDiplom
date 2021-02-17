@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -24,17 +25,12 @@ public class TagService {
     }
 
     public ResponseEntity<TagResponse> getTag(String query) {
-        List<Tag> tagList = new ArrayList<>();
+        List<Tag> tagList = tagRepository.findAllByTags(query).stream()
+                .map(t -> new Tag(t.getName(), t.getWeight()))
+                .collect(Collectors.toList());
 
-        List<TagCustom> tagsResp = tagRepository.findAllByTags(query);
-
-        //Нужна ли проверка на null? Возможно репозиторий возвращает инициализированную коллекцию
-        if (tagsResp != null) {
-            tagsResp.forEach(tagCustom -> {
-                tagList.add(new Tag(tagCustom.getName(), tagCustom.getWeight()));
-            });
-        }
         TagResponse tagResponse = new TagResponse(tagList);
+
         return ResponseEntity.ok(tagResponse);
     }
 }

@@ -24,7 +24,7 @@ public class SettingsService {
 
         SettingsResponse settingsResponse = new SettingsResponse();
 
-        settingsResponse.setStatisticIsPublic(getSettingsValue(globalSettingsRepository, "MULTIUSER_MODE"));
+        settingsResponse.setStatisticsIsPublic(getSettingsValue(globalSettingsRepository, "MULTIUSER_MODE"));
         settingsResponse.setMultiUserMode(getSettingsValue(globalSettingsRepository, "POST_PREMODERATION"));
         settingsResponse.setPostPremoderation(getSettingsValue(globalSettingsRepository, "STATISTICS_IS_PUBLIC"));
 

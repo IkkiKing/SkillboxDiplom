@@ -23,7 +23,8 @@ public class ContextUser {
     public static com.ikkiking.model.User getUserFromContext(UserRepository userRepository) throws UsernameNotFoundException {
         String email = ContextUser.getEmailFromContext();
 
-        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("user " + email +
-                " not found"));
+        return userRepository.findByEmail(email).orElseThrow(
+                () -> new UsernameNotFoundException("user " + email + " not found")
+        );
     }
 }
