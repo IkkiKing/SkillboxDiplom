@@ -19,9 +19,11 @@ import com.ikkiking.repository.StatisticCustom;
 import com.ikkiking.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -36,26 +38,60 @@ public class GeneralService {
     private final UserRepository userRepository;
     private final GlobalSettingsRepository globalSettingsRepository;
 
-
-    /*TODO не подтягивается конфигурация разобраться с этим
-    *
-    * */
-    //@Value("${image.filepath}")
+    @Value("${image.filepath}")
     private final static String imageDir = "src/main/resources/upload";
 
-    //@Value("${avatar.filePath}")
+    @Value("${avatar.filePath}")
     private final static String avatarDir = "src/main/resources/upload/avatar";
 
-    //@Value("${avatar.fileSize}")
+    @Value("${avatar.fileSize}")
     private final static long maxFileSize = 5;
 
     @Autowired
-    public GeneralService(PostRepository postRepository, UserRepository userRepository, GlobalSettingsRepository globalSettingsRepository) {
+    public GeneralService(PostRepository postRepository,
+                          UserRepository userRepository,
+                          GlobalSettingsRepository globalSettingsRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.globalSettingsRepository = globalSettingsRepository;
     }
 
+    /**
+     * Возвращает статистику текущего пользователя по блогу.
+     * */
+    public ResponseEntity<StatisticResponse> myStatistic() {
+
+        User user = ContextUser.getUserFromContext(userRepository);
+
+        StatisticCustom statisticCustom = postRepository.findByUserId(user.getId());
+
+        return ResponseEntity.ok(getStatisticResponse(statisticCustom));
+    }
+
+    /**
+     * Возвращает всю статистику по блогу.
+     * */
+    public ResponseEntity<StatisticResponse> allStatistic() {
+
+        User user = ContextUser.getUserFromContext(userRepository);
+
+        GlobalSettings globalSettings = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC").orElseThrow(
+                () -> new SettingNotFoundException("Check statistic settings")
+        );
+
+
+        //В случае если публичный показ статистики запрещен и юзер не модератор
+        if (globalSettings.getValue().equals("NO") && !user.isModerator()) {
+            throw new StatisticAccessException("Statistic is not public!");
+        }
+        StatisticCustom statisticCustom = postRepository.findAllStatistic();
+
+        return ResponseEntity.ok(getStatisticResponse(statisticCustom));
+    }
+
+    /**
+     * Вспомогательный метод формирующий ResponseObject для статистики.
+     * */
     private StatisticResponse getStatisticResponse(StatisticCustom statistic) {
         if (statistic.getPostsCount() == 0) {
             log.info("Posts count equal zero");
@@ -75,45 +111,10 @@ public class GeneralService {
         }
     }
 
-    public ResponseEntity<StatisticResponse> getMyStatistic() {
-
-        User user = ContextUser.getUserFromContext(userRepository);
-
-        StatisticCustom statisticCustom = postRepository.findByUserId(user.getId());
-
-        return ResponseEntity.ok(getStatisticResponse(statisticCustom));
-    }
-
-    public ResponseEntity<StatisticResponse> getAllStatistic() {
-
-        User user = ContextUser.getUserFromContext(userRepository);
-
-        GlobalSettings globalSettings = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC").orElseThrow(
-                () -> new SettingNotFoundException("Check statistic settings")
-        );
-
-
-        //В случае если публичный показ статистики запрещен и юзер не модератор
-        if (globalSettings.getValue().equals("NO") && !user.isModerator()) {
-            throw new StatisticAccessException("Statistic is not public!");
-        }
-        StatisticCustom statisticCustom = postRepository.findAllStatistic();
-
-        return ResponseEntity.ok(getStatisticResponse(statisticCustom));
-    }
-
-    private ModerationStatus getModerationStatusByDecision(ModerationRequest moderationRequest) {
-
-        ModerationStatus moderationStatus = null;
-        if (moderationRequest.getDecision().equals("accept")) {
-            moderationStatus = ModerationStatus.ACCEPTED;
-        }
-        if (moderationRequest.getDecision().equals("decline")) {
-            moderationStatus = ModerationStatus.DECLINED;
-        }
-        return moderationStatus;
-    }
-
+    /**
+     * Модерация постов.
+     * */
+    @Transactional
     public ResponseEntity<ModerationResponse> moderate(ModerationRequest moderationRequest) {
         ModerationResponse moderationResponse = new ModerationResponse();
 
@@ -138,7 +139,24 @@ public class GeneralService {
         return ResponseEntity.ok(moderationResponse);
     }
 
+    /**
+     * Вспомогательный метод, определяет статус модерации по переданному решению.
+     * */
+    private ModerationStatus getModerationStatusByDecision(ModerationRequest moderationRequest) {
 
+        ModerationStatus moderationStatus = null;
+        if (moderationRequest.getDecision().equals("accept")) {
+            moderationStatus = ModerationStatus.ACCEPTED;
+        }
+        if (moderationRequest.getDecision().equals("decline")) {
+            moderationStatus = ModerationStatus.DECLINED;
+        }
+        return moderationStatus;
+    }
+
+    /**
+     * Загрузка изображения.
+     * */
     public ResponseEntity<Object> image(MultipartFile multipartFile) {
 
         ImageResponse imageResponse = new ImageResponse();
@@ -151,6 +169,7 @@ public class GeneralService {
                 imageDir
         );
 
+        //TODO: Возможно сделать через ControllerAdvice?
         if (imageUtil.getFormatName().equals("unknown")) {
             log.error("Unknown image format file");
             imageResponse.setErrors(new ImageErrorResponse("Выбран не поддерживаемый тип файла"));
@@ -161,6 +180,7 @@ public class GeneralService {
             imageUtil.uploadImage();
             imageResponse.setResult(true);
         } catch (IOException ex) {
+            //TODO: Возможно сделать через ControllerAdvice?
             log.error("Error file uploading");
             imageResponse.setResult(false);
             imageResponse.setErrors(new ImageErrorResponse("Ошибка загрузки файла на сервер"));
@@ -170,7 +190,15 @@ public class GeneralService {
         return ResponseEntity.ok(imageUtil.getImagePath());
     }
 
-
+    /**
+     * Редактирование профиля.
+     * @param photo аватар
+     * @param name логин
+     * @param email e-mail
+     * @param removePhoto признак необходимости удаления фото
+     * @param password пароль
+     * */
+    @Transactional
     public ResponseEntity<ProfileResponse> profileMulti(MultipartFile photo,
                                                         String name,
                                                         String email,
@@ -180,7 +208,6 @@ public class GeneralService {
         ProfileResponse profileResponse = new ProfileResponse();
         profileResponse.setResult(true);
         ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
-
 
         ImageUtil imageUtil = new ImageUtil(
                 photo,
@@ -228,7 +255,10 @@ public class GeneralService {
         return ResponseEntity.ok(profileResponse);
     }
 
-
+    /**
+     * Редактирование профиля(без изображения).
+     * */
+    @Transactional
     public ResponseEntity<ProfileResponse> profile(ProfileRequest profileRequest) {
         ProfileResponse profileResponse = new ProfileResponse();
         profileResponse.setResult(true);
@@ -239,6 +269,9 @@ public class GeneralService {
         return ResponseEntity.ok(profileResponse);
     }
 
+    /**
+     * Вспомогательный метод редактирования профиля.
+     * */
     private void editProfile(ProfileResponse profileResponse,
                              ProfileErrorResponse profileErrorResponse,
                              ProfileRequest profileRequest) {
@@ -258,7 +291,6 @@ public class GeneralService {
                 profileResponse.setResult(false);
             }
         }
-
         //Если текущий email не совпадает с указанным
         if (!user.getEmail().equals(email)) {
             if (userRepository.findByEmail(email).isPresent()) {
@@ -266,32 +298,24 @@ public class GeneralService {
                 profileResponse.setResult(false);
             }
         }
-
         if (profileResponse.isResult()) {
-
             user.setName(name);
             user.setEmail(email);
-
             if (removePhoto != null) {
                 if (removePhoto == 1) {
                     user.setPhoto(null);
                 }
             }
-
             if (password != null) {
                 user.setPassword(SecurityConfig.passwordEncoder()
                         .encode(password));
             }
-
             if (photo != null) {
                 user.setPhoto(photo);
             }
-
             userRepository.save(user);
         } else {
             profileResponse.setErrors(profileErrorResponse);
         }
     }
-
-
 }

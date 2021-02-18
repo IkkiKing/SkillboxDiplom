@@ -1,6 +1,5 @@
 package com.ikkiking.service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ikkiking.api.request.SettingsRequest;
 import com.ikkiking.api.response.SettingsResponse;
 import com.ikkiking.model.GlobalSettings;
@@ -8,10 +7,9 @@ import com.ikkiking.repository.GlobalSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.lang.reflect.Field;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -20,10 +18,12 @@ public class SettingsService {
     @Autowired
     private GlobalSettingsRepository globalSettingsRepository;
 
-    public ResponseEntity<SettingsResponse> getGlobalSettings() {
+    /**
+     * Глобальные настройки блога.
+     */
+    public ResponseEntity<SettingsResponse> globalSettings() {
 
         SettingsResponse settingsResponse = new SettingsResponse();
-
         settingsResponse.setStatisticsIsPublic(getSettingsValue(globalSettingsRepository, "MULTIUSER_MODE"));
         settingsResponse.setMultiUserMode(getSettingsValue(globalSettingsRepository, "POST_PREMODERATION"));
         settingsResponse.setPostPremoderation(getSettingsValue(globalSettingsRepository, "STATISTICS_IS_PUBLIC"));
@@ -31,11 +31,13 @@ public class SettingsService {
         return ResponseEntity.ok(settingsResponse);
     }
 
+    /**
+     * Вспомогательный метод получения настройки из БД.
+     */
     public static boolean getSettingsValue(GlobalSettingsRepository globalSettingsRepository,
-                                            String code) {
+                                           String code) {
 
         Optional<GlobalSettings> valueDb = globalSettingsRepository.findByCode(code);
-
         boolean value = true;
         if (valueDb.isPresent()) {
             if (valueDb.get().getValue().equals("NO")) {
@@ -45,12 +47,21 @@ public class SettingsService {
         return value;
     }
 
-    public void setSettings(@RequestBody SettingsRequest settingsRequest) {
+    /**
+     * Управление настройками блога.
+     * */
+    @Transactional
+    public void settings(@RequestBody SettingsRequest settingsRequest) {
         setSetting("MULTIUSER_MODE", settingsRequest.isMultiUserMode() ? "YES" : "NO");
         setSetting("POST_PREMODERATION", settingsRequest.isPostPreModeration() ? "YES" : "NO");
         setSetting("STATISTICS_IS_PUBLIC", settingsRequest.isStatisticIsPublic() ? "YES" : "NO");
     }
 
+    /**
+     * Вспомогательный метод управлений настройкой.
+     * @param code Код настройки
+     * @param value Значение настройки
+     * */
     private void setSetting(String code, String value) {
         Optional<GlobalSettings> globalSettingsOptional = globalSettingsRepository.findByCode(code);
         if (globalSettingsOptional.isPresent()) {

@@ -14,9 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
-
 @RestController
 @RequestMapping("/api")
 public class ApiGeneralController {
@@ -45,40 +42,40 @@ public class ApiGeneralController {
 
     @GetMapping("/settings")
     public ResponseEntity<SettingsResponse> settings() {
-        return settingsService.getGlobalSettings();
+        return settingsService.globalSettings();
     }
 
     @PutMapping("/settings")
     @PreAuthorize("hasAuthority('user:moderate')")
     public void setSettings(@RequestBody SettingsRequest settingsRequest) {
-        settingsService.setSettings(settingsRequest);
+        settingsService.settings(settingsRequest);
     }
 
     @GetMapping("/tag")
     public ResponseEntity<TagResponse> getTags(@RequestParam(name = "query", required = false) String query) {
-        return tagService.getTag(query);
+        return tagService.tag(query);
     }
 
     @GetMapping("/calendar")
     public ResponseEntity<CalendarResponse> getCalendar(@RequestParam(name = "year", required = false, defaultValue = "0") int year) {
-        return calendarService.getCalendar(year);
+        return calendarService.calendar(year);
     }
 
     @GetMapping("/statistics/my")
     @PreAuthorize("hasAuthority('user:write')")
     public ResponseEntity<StatisticResponse> getMyStatistic() {
-        return generalService.getMyStatistic();
+        return generalService.myStatistic();
     }
 
     @GetMapping("/statistics/all")
     public ResponseEntity<StatisticResponse> getAllStatistic() {
-        return generalService.getAllStatistic();
+        return generalService.allStatistic();
     }
 
     @PostMapping("/comment")
     @PreAuthorize("hasAuthority('user:write')")
     public ResponseEntity<CommentAddResponse> addComment(@RequestBody CommentRequest commentRequest) {
-        return postCommentsService.addComment(commentRequest);
+        return postCommentsService.comment(commentRequest);
     }
 
     @PostMapping("/moderation")

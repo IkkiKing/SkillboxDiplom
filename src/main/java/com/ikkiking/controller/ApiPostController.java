@@ -27,7 +27,7 @@ public class ApiPostController {
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "mode", required = false, defaultValue = "recent") String mode) {
 
-        return postService.getPosts(limit, offset, mode);
+        return postService.posts(limit, offset, mode);
     }
 
     @GetMapping("/search")
@@ -45,7 +45,7 @@ public class ApiPostController {
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "date") String date)
     {
-        return postService.getPostsByDate(limit, offset, date);
+        return postService.postsByDate(limit, offset, date);
     }
 
     @GetMapping("/byTag")
@@ -53,7 +53,7 @@ public class ApiPostController {
             @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "tag", defaultValue = "") String tag) {
-        return postService.getPostsByTag(limit, offset, tag);
+        return postService.postsByTag(limit, offset, tag);
     }
 
     @GetMapping("/moderation")
@@ -63,7 +63,7 @@ public class ApiPostController {
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "status", defaultValue = "new") String status) {
 
-        return postService.getPostsForModeration(limit, offset, status);
+        return postService.postsForModeration(limit, offset, status);
     }
 
     @GetMapping("/my")
@@ -73,12 +73,12 @@ public class ApiPostController {
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "status", defaultValue = "published") String status) {
 
-        return postService.getMyPosts(limit, offset, status);
+        return postService.myPosts(limit, offset, status);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PostByIdResponse> getPostById(@PathVariable long id) {
-        return postService.getPostById(id);
+        return postService.postById(id);
     }
 
     @PostMapping

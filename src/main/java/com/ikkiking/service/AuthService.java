@@ -6,9 +6,9 @@ import com.ikkiking.api.request.LoginRequest;
 import com.ikkiking.api.request.PasswordRequest;
 import com.ikkiking.api.request.RegisterRequest;
 import com.ikkiking.api.request.RestoreRequest;
-import com.ikkiking.api.response.*;
 import com.ikkiking.api.response.AuthResponse.AuthCaptchaResponse;
 import com.ikkiking.api.response.AuthResponse.AuthLogoutResponse;
+import com.ikkiking.api.response.*;
 import com.ikkiking.base.DateHelper;
 import com.ikkiking.base.exception.RegistrationClosedException;
 import com.ikkiking.config.SecurityConfig;
@@ -32,6 +32,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.security.Principal;
 import java.util.Base64;
 import java.util.Optional;
@@ -45,7 +46,6 @@ public class AuthService {
     private final PostRepository postRepository;
     private final GlobalSettingsRepository globalSettingsRepository;
     private final CaptchaCodesRepository captchaCodesRepository;
-
     private final JavaMailSender emailSender;
 
     @Value("${authService.captchaDeleteHours}")
@@ -67,34 +67,9 @@ public class AuthService {
         this.emailSender = emailSender;
     }
 
-    //Метод получения логина-ответа
-    private LoginResponse getLoginResponse(String email) {
-
-        com.ikkiking.model.User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException(email));
-
-        UserLoginResponse userLoginResponse = new UserLoginResponse();
-        userLoginResponse.setId(currentUser.getId());
-        userLoginResponse.setName(currentUser.getName());
-        userLoginResponse.setPhoto(currentUser.getPhoto());
-        userLoginResponse.setEmail(currentUser.getEmail());
-
-        userLoginResponse.setModeration(currentUser.isModerator());
-        userLoginResponse.setSettings(currentUser.isModerator());
-
-        if (currentUser.isModerator()) {
-            userLoginResponse.setModerationCount(postRepository.countPostsForModeration());
-        } else {
-            userLoginResponse.setModerationCount(0);
-        }
-
-        LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setResult(true);
-        loginResponse.setUserLoginResponse(userLoginResponse);
-        return loginResponse;
-    }
-
-    //Метод аутентификации - логина
+    /**
+     * Аутентификации - логин.
+     * */
     public ResponseEntity<LoginResponse> login(LoginRequest loginRequest) {
 
         Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
@@ -108,15 +83,43 @@ public class AuthService {
         return ResponseEntity.ok(loginResponse);
     }
 
+    /**
+     * Проверка статуса авторизации.
+     * */
     public ResponseEntity<LoginResponse> check(Principal principal) {
         if (principal == null) {
             return ResponseEntity.ok(new LoginResponse());
         }
-        return ResponseEntity.ok(
-                getLoginResponse(principal.getName())
-        );
+        return ResponseEntity.ok(getLoginResponse(principal.getName()));
     }
 
+    /**
+     * Вспомогательный метод формирования LoginResponse по email пользователя.
+     * */
+    private LoginResponse getLoginResponse(String email) {
+
+        com.ikkiking.model.User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException(email));
+
+        UserLoginResponse userLoginResponse = new UserLoginResponse();
+        userLoginResponse.setId(currentUser.getId());
+        userLoginResponse.setName(currentUser.getName());
+        userLoginResponse.setPhoto(currentUser.getPhoto());
+        userLoginResponse.setEmail(currentUser.getEmail());
+        userLoginResponse.setModeration(currentUser.isModerator());
+        userLoginResponse.setSettings(currentUser.isModerator());
+        userLoginResponse.setModerationCount(
+                currentUser.isModerator() ? postRepository.countPostsForModeration() : 0);
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setResult(true);
+        loginResponse.setUserLoginResponse(userLoginResponse);
+        return loginResponse;
+    }
+
+    /**
+     * Формирование капчи.
+     * */
     @Transactional
     public ResponseEntity<AuthCaptchaResponse> getCaptcha() {
         AuthCaptchaResponse authCaptchaResponse = new AuthCaptchaResponse();
@@ -137,7 +140,7 @@ public class AuthService {
                 null);
 
         String code = cage.getTokenGenerator().next();
-        String secretCode = RandomStringUtils.random(20, true, true);
+        String secretCode = RandomStringUtils.random(20, true, true);//TODO: 20 move in config variable
 
         String imageString = "data:image/png;base64, " + Base64.getEncoder().encodeToString(cage.draw(code));
 
@@ -158,62 +161,18 @@ public class AuthService {
         return ResponseEntity.ok(authCaptchaResponse);
     }
 
+    /**
+     * Логаут.
+     * */
     public ResponseEntity<AuthLogoutResponse> logout() {
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok(new AuthLogoutResponse(true));
     }
 
-
-    private boolean isValidRegisterRequest(RegisterRequest registerRequest,
-                                           RegisterErrorResponse registerErrorResponse) {
-
-        boolean result = true;
-
-        if (registerRequest.getEmail().isEmpty() ||
-                registerRequest.getEmail() == null) {
-            registerErrorResponse.setEmail("E-mail не может быть пустым");
-            result = false;
-        } else {
-            if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
-                registerErrorResponse.setEmail("Этот e-mail уже зарегистрирован");
-                result = false;
-            }
-        }
-
-        if (registerRequest.getName().isEmpty() ||
-                registerRequest.getName() == null) {
-            registerErrorResponse.setName("Имя не может быть пустым");
-            result = false;
-        }
-
-        if (registerRequest.getPassword().isEmpty() ||
-                registerRequest.getPassword() == null) {
-            registerErrorResponse.setPassword("Пароль не может быть пустым");
-            result = false;
-        } else {
-            if (registerRequest.getPassword().length() < 6) {
-                result = false;
-                registerErrorResponse.setPassword("Пароль не может быть короче 6 символов");
-            }
-        }
-
-        if (registerRequest.getCaptcha().isEmpty() ||
-                registerRequest.getCaptcha() == null) {
-            registerErrorResponse.setCaptcha("Код с картинки не может быть пустым");
-            result = false;
-        } else {
-            if (captchaCodesRepository.countByCodeAndSecretCode(
-                    registerRequest.getCaptcha(),
-                    registerRequest.getCaptchaSecret()
-            ) == 0) {
-                registerErrorResponse.setCaptcha("Код с картинки указан не верно");
-                result = false;
-            }
-        }
-
-        return result;
-    }
-
+    /**
+     * Регистрация.
+     * */
+    @Transactional
     public ResponseEntity<RegisterResponse> register(RegisterRequest registerRequest) {
         RegisterResponse registerResponse = new RegisterResponse();
         registerResponse.setResult(true);
@@ -246,14 +205,71 @@ public class AuthService {
         return ResponseEntity.ok(registerResponse);
     }
 
+    /**
+     * Вспомогательный метод проверки валидности регистрационных данных.
+     * TODO: Возможно часть проверок лишние, часть можно зашить в DTO через аннотации?
+     * */
+    private boolean isValidRegisterRequest(RegisterRequest registerRequest,
+                                           RegisterErrorResponse registerErrorResponse) {
+
+        boolean result = true;
+
+        if (registerRequest.getEmail().isEmpty() ||
+                registerRequest.getEmail() == null) {
+            registerErrorResponse.setEmail("E-mail не может быть пустым");
+            result = false;
+        } else {
+            if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+                registerErrorResponse.setEmail("Этот e-mail уже зарегистрирован");
+                result = false;
+            }
+        }
+
+        if (registerRequest.getName().isEmpty() ||
+                registerRequest.getName() == null) {
+            registerErrorResponse.setName("Имя не может быть пустым");
+            result = false;
+        }
+
+        if (registerRequest.getPassword().isEmpty() ||
+                registerRequest.getPassword() == null) {
+            registerErrorResponse.setPassword("Пароль не может быть пустым");
+            result = false;
+        } else {
+            if (registerRequest.getPassword().length() < 6) { //TODO: move in config variable
+                result = false;
+                registerErrorResponse.setPassword("Пароль не может быть короче 6 символов");
+            }
+        }
+
+        if (registerRequest.getCaptcha().isEmpty() ||
+                registerRequest.getCaptcha() == null) {
+            registerErrorResponse.setCaptcha("Код с картинки не может быть пустым");
+            result = false;
+        } else {
+            if (captchaCodesRepository.countByCodeAndSecretCode(
+                    registerRequest.getCaptcha(),
+                    registerRequest.getCaptchaSecret()
+            ) == 0) {
+                registerErrorResponse.setCaptcha("Код с картинки указан не верно");
+                result = false;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Восстановление пароля.
+     * */
+    @Transactional
     public ResponseEntity<RestoreResponse> restore(RestoreRequest restoreRequest) {
         RestoreResponse restoreResponse = new RestoreResponse(false);
-
         Optional<com.ikkiking.model.User> userOptional = userRepository.findByEmail(restoreRequest.getEmail());
 
         if (userOptional.isPresent()) {
             com.ikkiking.model.User user = userOptional.get();
-            String userCode = RandomStringUtils.random(40, true, true);
+            String userCode = RandomStringUtils.random(40, true, true);//TODO: 40 move in config variable
             user.setCode(userCode);
             userRepository.save(user);
             restoreResponse.setResult(true);
@@ -261,6 +277,7 @@ public class AuthService {
                     "Восстановление пароля DevPub",
                     "Для восстановления вашего пароля, пройдите по ссылке " +
                             "http://localhost:8080/login/change-password/" + userCode);
+
             log.info("Email was sended!");
         }else{
             log.warn("User not found. Email wasnt sended.");
@@ -269,18 +286,25 @@ public class AuthService {
         return ResponseEntity.ok(restoreResponse);
     }
 
+    /**
+     * Вспомогательный метод отправки Email для восстановления пароля.
+     * */
     private void sendSimpleMessage(String to,
                                    String subject,
                                    String text) {
 
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("DeveloperSmelovEA@gmail.com");
+        message.setFrom("DeveloperSmelovEA@gmail.com");//TODO: move in config variable
         message.setTo(to);
         message.setSubject(subject);
         message.setText(text);
         emailSender.send(message);
     }
 
+    /**
+     * Изменение пароля.
+     * */
+    @Transactional
     public ResponseEntity<PasswordResponse> password(PasswordRequest passwordRequest) {
         PasswordResponse passwordResponse = new PasswordResponse();
         PasswordErrorResponse passwordErrorResponse = new PasswordErrorResponse();
@@ -293,7 +317,7 @@ public class AuthService {
         if (password.isEmpty() || password == null) {
             passwordErrorResponse.setPassword("Пароль не может быть пустым");
         } else {
-            if (password.length() < 6) {
+            if (password.length() < 6) {//TODO: move in config variable
                 passwordErrorResponse.setPassword("Пароль короче 6 символов");
             }
         }

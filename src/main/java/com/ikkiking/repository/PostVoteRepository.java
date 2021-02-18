@@ -1,24 +1,22 @@
 package com.ikkiking.repository;
 
 
-import com.ikkiking.model.Post;
 import com.ikkiking.model.PostVote;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface PostVoteRepository extends CrudRepository<PostVote, Long> {
+public interface PostVoteRepository extends JpaRepository<PostVote, Long> {
 
     @Query(value = "select count(*) from post_votes pv where pv.post_id = :postId and pv.value = 1", nativeQuery = true)
-    int countLikesByPost(Long postId);
+    int countLikesByPostId(Long postId);
 
     @Query(value = "select count(*) from post_votes pv where pv.post_id = :postId and pv.value = -1", nativeQuery = true)
-    int countDislikesByPost(Long postId);
+    int countDislikesByPostId(Long postId);
 
-    @Query(value = "select * from post_votes pv where pv.post_id = :postId and pv.user_id = :userId", nativeQuery = true)
     Optional<PostVote> findByPostIdAndUserId(Long postId, Long userId);
 
 
