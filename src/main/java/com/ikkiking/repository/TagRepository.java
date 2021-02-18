@@ -2,6 +2,7 @@ package com.ikkiking.repository;
 
 
 import com.ikkiking.model.Tag;
+import com.ikkiking.model.Tag2Post;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -19,7 +20,7 @@ public interface TagRepository extends CrudRepository<Tag, Integer> {
                           "(select count(*) from tag2post t2p where t2p.tag_id = t.id) / " +
                           "(select count(*) from posts p where p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate()) as weight " +
                     "from tags t " +
-                    "where (:query is null or t.name = :query) group by t.name",
+                    "where (:query is null or t.name = :query) group by t.id",
     nativeQuery = true)
     List<TagCustom> findAllByTags(String query);
 
@@ -29,4 +30,6 @@ public interface TagRepository extends CrudRepository<Tag, Integer> {
 
     @Query(value = "select t.* from tags t where t.name = :name", nativeQuery = true)
     Optional<Tag> findByName(String name);
+
+    List<Tag> findAllByNameIn(List<String> tags);
 }

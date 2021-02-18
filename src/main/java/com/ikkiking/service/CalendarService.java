@@ -1,41 +1,48 @@
 package com.ikkiking.service;
 
 import com.ikkiking.api.response.CalendarResponse;
-import com.ikkiking.model.Post;
+import com.ikkiking.base.DateHelper;
 import com.ikkiking.repository.CalendarCustom;
 import com.ikkiking.repository.PostRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
+@Slf4j
 public class CalendarService {
 
-    @Autowired
     private PostRepository postRepository;
 
-    public CalendarResponse getCalendar(int year) {
+    @Autowired
+    public CalendarService(PostRepository postRepository) {
+        this.postRepository = postRepository;
+    }
 
+    public ResponseEntity<CalendarResponse> getCalendar(int year) {
+        CalendarResponse calendarResponse = new CalendarResponse();
         if (year == 0) {
-            year = Calendar.getInstance(TimeZone.getTimeZone("UTC")).get(Calendar.YEAR);
+            log.info("The year was setted as default");
+            year = DateHelper.getCurrentDate().get(Calendar.YEAR);
         }
 
-        List<CalendarCustom> posts = postRepository.findPostDates(year);
+        List<CalendarCustom> postsByYears = postRepository.findPostByYear(year);
+        List<Integer> years = postRepository.findYears();
 
-        Set<Integer> years = new HashSet<>();
         Map<String, Long> postsMap = new HashMap<>();
-
-        if (posts != null) {
-            posts.forEach(t -> {
-                years.add(t.getYear());
-                postsMap.put(t.getDate(), t.getAmount());
-            });
+        if (postsByYears != null) {
+            postsMap = postsByYears.stream()
+                    .collect(Collectors.toMap(CalendarCustom::getDate, CalendarCustom::getAmount));
         }
 
-        CalendarResponse calendarResponse = new CalendarResponse(years, postsMap);
-        return calendarResponse;
+        calendarResponse.setYears(years);
+        calendarResponse.setPosts(postsMap);
+        return ResponseEntity.ok(calendarResponse);
     }
 
 }

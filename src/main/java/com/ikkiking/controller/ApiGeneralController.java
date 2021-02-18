@@ -2,6 +2,7 @@ package com.ikkiking.controller;
 
 import com.ikkiking.api.request.CommentRequest;
 import com.ikkiking.api.request.ModerationRequest;
+import com.ikkiking.api.request.ProfileRequest;
 import com.ikkiking.api.request.SettingsRequest;
 import com.ikkiking.api.response.*;
 import com.ikkiking.api.response.StatisticResponse.StatisticResponse;
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 
 @RestController
@@ -36,14 +38,13 @@ public class ApiGeneralController {
         this.postCommentsService = postCommentsService;
     }
 
-
     @GetMapping("/init")
     public InitResponse init() {
         return initResponse;
     }
 
     @GetMapping("/settings")
-    public SettingsResponse settings() {
+    public ResponseEntity<SettingsResponse> settings() {
         return settingsService.getGlobalSettings();
     }
 
@@ -54,12 +55,12 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/tag")
-    public TagResponse getTags(@RequestParam(name = "query", required = false) String query) {
+    public ResponseEntity<TagResponse> getTags(@RequestParam(name = "query", required = false) String query) {
         return tagService.getTag(query);
     }
 
     @GetMapping("/calendar")
-    public CalendarResponse getCalendar(@RequestParam(name = "year", required = false, defaultValue = "0") int year) {
+    public ResponseEntity<CalendarResponse> getCalendar(@RequestParam(name = "year", required = false, defaultValue = "0") int year) {
         return calendarService.getCalendar(year);
     }
 
@@ -88,8 +89,26 @@ public class ApiGeneralController {
 
     @PostMapping("/image")
     @PreAuthorize("hasAuthority('user:write')")
-    public ResponseEntity<Object> image(@RequestParam("image") MultipartFile multipartFile){
+    public ResponseEntity<Object> image(@RequestParam("image") MultipartFile multipartFile) {
         return generalService.image(multipartFile);
     }
 
+
+    @PostMapping(value = "/profile/my", consumes = {"multipart/form-data"})
+    @PreAuthorize("hasAuthority('user:write')")
+    public ResponseEntity<ProfileResponse> profile(
+            @RequestPart("photo") MultipartFile photo,
+            @RequestPart(name = "name") String name,
+            @RequestPart(name = "email") String email,
+            @RequestPart(name = "removePhoto") String removePhoto,
+            @RequestPart(name = "password", required = false) String password) {
+        return generalService.profileMulti(photo, name, email, removePhoto, password);
+    }
+
+    @PostMapping(value = "/profile/my", consumes = {"application/json"})
+    @PreAuthorize("hasAuthority('user:write')")
+    public ResponseEntity<ProfileResponse> profile(@RequestBody ProfileRequest profileRequest) {
+        profileRequest.hashCode();
+        return generalService.profile(profileRequest);
+    }
 }
