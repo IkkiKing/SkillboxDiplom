@@ -9,7 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 
 @Repository
@@ -25,7 +24,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate() GROUP BY p.id ORDER BY (select count(*) from post_votes pv where pv.post_id = p.id and pv.value = 1) desc",
             nativeQuery = true)
     Page<Post> findAllByBest(Pageable pageable);
-
 
     @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' and p.time < sysdate() and (p.title LIKE %:query% or p.text like %:query%)",
             nativeQuery = true)

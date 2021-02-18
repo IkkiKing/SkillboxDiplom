@@ -9,7 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -24,7 +27,14 @@ public class CalendarService {
         this.postRepository = postRepository;
     }
 
-    public ResponseEntity<CalendarResponse> getCalendar(int year) {
+    /**
+     * Метод формирующий Календарь.
+     * @param year год за который требуется сформировать кол-во постов по каждой дате
+     *             может быть пустым, в этом случае ставим текущий
+     *
+     * @return Календарь с кол-вом публикаций по датам
+     * */
+    public ResponseEntity<CalendarResponse> calendar(int year) {
         CalendarResponse calendarResponse = new CalendarResponse();
         if (year == 0) {
             log.info("The year was setted as default");

@@ -16,10 +16,10 @@ authService.captchaDeleteHours: 1
 spring.servlet.multipart.max-file-size: 10MB
 spring.servlet.multipart.max-request-size: 10MB
 
-image.filepath : src/main/resources/upload
+image.filepath: src/main/resources/upload
 
-avatar.filePath : src/main/resources/upload/avatar
-avatar.fileSize : 5
+avatar.filePath: src/main/resources/upload/avatar
+avatar.fileSize: 5
 
 
 spring.mail.host: smtp.gmail.com

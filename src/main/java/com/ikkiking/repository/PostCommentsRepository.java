@@ -1,22 +1,14 @@
 package com.ikkiking.repository;
 
-import com.ikkiking.model.Post;
 import com.ikkiking.model.PostComments;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface PostCommentsRepository extends CrudRepository<PostComments, Long> {
+public interface PostCommentsRepository extends JpaRepository<PostComments, Long> {
 
-    @Query(value = "select count(*) from post_comments pc where pc.post_id = :post",
-        nativeQuery = true)
-    int countCommentsByPost(Post post);
-
-    @Query(value = "SELECT * FROM post_comments pc " +
-            "WHERE pc.post_id = :postId",
-            nativeQuery = true)
-    List<PostComments> findAllByIPostId(long postId);
+    int countByPostId(Long postId);
+    List<PostComments> findAllByPostId(long postId);
 }

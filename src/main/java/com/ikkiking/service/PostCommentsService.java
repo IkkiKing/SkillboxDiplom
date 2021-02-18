@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Optional;
@@ -30,8 +31,11 @@ public class PostCommentsService {
         this.userRepository = userRepository;
     }
 
-
-    public ResponseEntity<CommentAddResponse> addComment(CommentRequest commentRequest) {
+    /**
+     * Добавления комментария к посту.
+     * */
+    @Transactional
+    public ResponseEntity<CommentAddResponse> comment(CommentRequest commentRequest) {
 
         CommentAddResponse commentAddResponse = new CommentAddResponse();
 
@@ -39,6 +43,7 @@ public class PostCommentsService {
         Long parentId = commentRequest.getParentId();
         Long postId = commentRequest.getPostId();
 
+        //TODO: Возможно сделать через ControllerAdvice?
         if (text == null || text.isEmpty()) {
             commentAddResponse.setErrors(new CommentAddError("Текст комментария не задан"));
             return new ResponseEntity(commentAddResponse, HttpStatus.BAD_REQUEST);
