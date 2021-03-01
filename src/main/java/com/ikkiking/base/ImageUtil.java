@@ -20,6 +20,10 @@ import java.nio.file.StandardCopyOption;
 @Data
 public class ImageUtil {
 
+    private static final int AVATAR_WIDTH = 36;
+    private static final int AVATAR_LENGTH = 36;
+    private static final int AVATAR_NAME_LENGTH = 20;
+
     private MultipartFile multipartFile;
     private int fileNameLength;
     private boolean withLetters;
@@ -58,9 +62,9 @@ public class ImageUtil {
 
     public void uploadAvatar() throws IOException {
         BufferedImage bufferedImage = ImageIO.read(multipartFile.getInputStream());
-        bufferedImage = Scalr.resize(bufferedImage, 36, 36);
+        bufferedImage = Scalr.resize(bufferedImage, AVATAR_WIDTH, AVATAR_LENGTH);
 
-        String randomString = RandomStringUtils.random(20, true, false);
+        String randomString = RandomStringUtils.random(AVATAR_NAME_LENGTH, true, false);
 
         File file = new File(imageDir + "/" + randomString + "." + formatName);
 

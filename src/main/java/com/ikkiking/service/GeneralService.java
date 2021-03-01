@@ -37,12 +37,12 @@ import java.util.Optional;
 @Slf4j
 public class GeneralService {
 
-    @Value("${image.filepath}")
-    private final static String IMAGE_DIR = "src/main/resources/upload";
-    @Value("${avatar.filePath}")
-    private final static String AVATAR_DIR = "src/main/resources/upload/avatar";
-    @Value("${avatar.fileSize}")
-    private final static long MAX_FILE_SIZE = 5_000_000;
+    private static final String IMAGE_DIR = "src/main/resources/upload";
+    private static final String AVATAR_DIR = "src/main/resources/upload/avatar";
+    private static final long MAX_FILE_SIZE = 5_000_000;
+    private static final int PASSWORD_MIN_LENGTH = 6;
+    private static final int IMAGE_NAME_LENGTH = 6;
+
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -160,7 +160,7 @@ public class GeneralService {
         ImageResponse imageResponse = new ImageResponse();
         ImageUtil imageUtil = new ImageUtil(
                 multipartFile,
-                20,
+                IMAGE_NAME_LENGTH,
                 true,
                 false,
                 IMAGE_DIR
@@ -199,7 +199,7 @@ public class GeneralService {
                                                         String password) {
         ImageUtil imageUtil = new ImageUtil(
                 photo,
-                20,
+                IMAGE_NAME_LENGTH,
                 true,
                 true,
                 AVATAR_DIR);
@@ -286,7 +286,7 @@ public class GeneralService {
         ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
         //Если пароль есть, проверим его длину
         if (password != null && !password.isEmpty()) {
-            if (password.length() < 6) {
+            if (password.length() < PASSWORD_MIN_LENGTH) {
                 profileErrorResponse.setPassword("Пароль короче 6 символов");
                 throw new ProfileException(profileErrorResponse);
             }

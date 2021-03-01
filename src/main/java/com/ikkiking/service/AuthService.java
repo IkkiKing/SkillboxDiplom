@@ -48,6 +48,12 @@ public class AuthService {
 
     @Value("${authService.captchaDeleteHours}")
     private static int captchaDeleteHours;
+    private static final int PASSWORD_MIN_LENGTH = 6;
+    private static final int RESTORE_CODE_LENGTH = 20;
+    private static final int CAPTCHA_LENGTH = 4;
+    private static final int CAPTCHA_WIDTH = 100;
+    private static final int CAPTCHA_HEIGHT = 35;
+    private static final int SECRET_CODE_LENGTH = 35;
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -126,7 +132,7 @@ public class AuthService {
      * */
     @Transactional
     public ResponseEntity<AuthCaptchaResponse> captcha() {
-        CaptchaUtil captchaUtil = new CaptchaUtil(4, 100, 35);
+        CaptchaUtil captchaUtil = new CaptchaUtil(CAPTCHA_LENGTH, CAPTCHA_WIDTH, CAPTCHA_HEIGHT, SECRET_CODE_LENGTH);
         String code = captchaUtil.getCode();
         String secretCode = captchaUtil.getSecretCode();
 
@@ -201,7 +207,7 @@ public class AuthService {
             registerErrorResponse.setPassword("Пароль не может быть пустым");
             throw new RegistrationException(registerErrorResponse);
         }
-        if (registerRequest.getPassword().length() < 6) { //TODO: move in config variable
+        if (registerRequest.getPassword().length() < PASSWORD_MIN_LENGTH) { //TODO: move in config variable
             registerErrorResponse.setPassword("Пароль не может быть короче 6 символов");
             throw new RegistrationException(registerErrorResponse);
         }
@@ -227,8 +233,7 @@ public class AuthService {
 
         if (userOptional.isPresent()) {
             com.ikkiking.model.User user = userOptional.get();
-            //TODO: 40 move in config variable
-            String userCode = RandomStringUtils.random(40, true, true);
+            String userCode = RandomStringUtils.random(RESTORE_CODE_LENGTH, true, true);
             user.setCode(userCode);
             userRepository.save(user);
             restoreResponse.setResult(true);
@@ -285,7 +290,7 @@ public class AuthService {
             throw new PasswordRestoreException(passwordErrorResponse);
         }
         //TODO: move in config variable
-        if (password.length() < 6) {
+        if (password.length() < PASSWORD_MIN_LENGTH) {
             passwordErrorResponse.setPassword("Пароль короче 6 символов");
             throw new PasswordRestoreException(passwordErrorResponse);
         }

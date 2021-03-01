@@ -14,15 +14,20 @@ public class CaptchaUtil {
     private int captchaLength;
     private int captchaWidth;
     private int captchaHeight;
+    private int secretCodeLength;
 
     private String code;
     private String secretCode;
     private String imageString;
 
-    public CaptchaUtil(int captchaLength, int captchaWidth, int captchaHeight) {
+    public CaptchaUtil(int captchaLength,
+                       int captchaWidth,
+                       int captchaHeight,
+                       int secretCodeLength) {
         this.captchaLength = captchaLength;
         this.captchaWidth = captchaWidth;
         this.captchaHeight = captchaHeight;
+        this.secretCodeLength = secretCodeLength;
         setupCaptchaUtil();
     }
 
@@ -37,19 +42,18 @@ public class CaptchaUtil {
                 null,
                 null,
                 null,
-                new Random(4));
+                null);
         Cage cage = new Cage(
                 painter,
                 null,
                 null,
                 "png",
-                0.5f,
+                0.5F,
                 generator,
                 null);
 
         code = cage.getTokenGenerator().next();
-        //TODO: 20 move in config variable
-        secretCode = RandomStringUtils.random(20, true, true);
+        secretCode = RandomStringUtils.random(secretCodeLength, true, true);
         imageString = "data:image/png;base64, " + Base64.getEncoder().encodeToString(cage.draw(code));
     }
 }

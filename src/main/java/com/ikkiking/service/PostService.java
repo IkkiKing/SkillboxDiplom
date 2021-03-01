@@ -49,9 +49,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PostService {
 
+    private static final int POST_MIN_TEXT_LENGTH = 50;
+    private static final int POST_MIN_TITLE_LENGTH = 3;
     private final PostRepository postRepository;
     private final PostVoteRepository postVoteRepository;
-    private final PostCommentsRepository postCommentsRepository;
     private final TagRepository tagRepository;
     private final Tag2PostRepository tag2PostRepository;
     private final UserRepository userRepository;
@@ -60,14 +61,12 @@ public class PostService {
     @Autowired
     public PostService(PostRepository postRepository,
                        PostVoteRepository postVoteRepository,
-                       PostCommentsRepository postCommentsRepository,
                        TagRepository tagRepository,
                        Tag2PostRepository tag2PostRepository,
                        UserRepository userRepository,
                        GlobalSettingsRepository globalSettingsRepository) {
         this.postRepository = postRepository;
         this.postVoteRepository = postVoteRepository;
-        this.postCommentsRepository = postCommentsRepository;
         this.tagRepository = tagRepository;
         this.tag2PostRepository = tag2PostRepository;
         this.userRepository = userRepository;
@@ -427,17 +426,18 @@ public class PostService {
     private boolean isCorrectPost(PostRequest postRequest,
                                   PostReturnResponse postPutResponse) {
         boolean isCorrectPost = true;
-        if (postRequest.getTitle().length() < 3 || postRequest.getText().length() < 50) {
+        if (postRequest.getTitle().length() < POST_MIN_TITLE_LENGTH
+                || postRequest.getText().length() < POST_MIN_TEXT_LENGTH) {
 
             postPutResponse.setResult(false);
 
             String title = null;
             String text = null;
 
-            if (postRequest.getTitle().length() < 3) {
+            if (postRequest.getTitle().length() < POST_MIN_TITLE_LENGTH) {
                 title = "Заголовок не установлен";
             }
-            if (postRequest.getText().length() < 50) {
+            if (postRequest.getText().length() < POST_MIN_TEXT_LENGTH) {
                 text = "Текст публикации слишком короткий";
             }
 

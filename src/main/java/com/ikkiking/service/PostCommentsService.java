@@ -18,6 +18,8 @@ import java.util.Optional;
 
 @Service
 public class PostCommentsService {
+
+    private static final int COMMENT_MIN_TEXT_LENGTH = 50;
     private final PostCommentsRepository postCommentsRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -69,7 +71,7 @@ public class PostCommentsService {
         if (text == null || text.isEmpty()) {
             throw new CommentException("Текст комментария не задан");
         }
-        if (text.length() < 3) {
+        if (text.length() < COMMENT_MIN_TEXT_LENGTH) {
             throw new CommentException("Текст комментария слишком короткий");
         }
         if (parentId != null) {

@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private static final int PASSWORD_ENCODE_STRENGTH = 12;
     private final UserDetailsService userDetailsService;
 
     @Autowired
@@ -56,7 +57,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public static PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+        return new BCryptPasswordEncoder(PASSWORD_ENCODE_STRENGTH);
     }
 }
 
