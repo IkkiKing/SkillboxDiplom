@@ -1,8 +1,11 @@
 package com.ikkiking.base;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.imgscalr.Scalr;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -67,7 +70,8 @@ public class ImageUtil {
         }
 
         ImageIO.write(bufferedImage, formatName, file);
-
+        System.out.println(file.getPath());
+        System.out.println(file.getAbsolutePath());
         imagePath = file.getAbsolutePath();
     }
 
@@ -117,4 +121,20 @@ public class ImageUtil {
 
     }
 
+    @Slf4j
+    public static class MailUtil {
+        public static void sendMail(JavaMailSender emailSender,
+                                    String to,
+                                    String subject,
+                                    String text) {
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("DeveloperSmelovEA@gmail.com");//TODO: move in config variable
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(text);
+            emailSender.send(message);
+            log.info("Email was sended!");
+        }
+    }
 }

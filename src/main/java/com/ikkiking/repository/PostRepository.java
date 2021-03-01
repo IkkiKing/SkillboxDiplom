@@ -81,7 +81,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "    and p.time < sysdate()" +
             "    and p.user_id = :userId",
             nativeQuery = true)
-    StatisticCustom findByUserId(Long userId);
+    StatisticCustom findMyStatisticByUserId(Long userId);
 
     @Query(value = "select count(p.id) as postsCount," +
             "       sum((select count(pv.id)" +

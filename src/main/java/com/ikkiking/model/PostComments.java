@@ -19,7 +19,7 @@ public class PostComments {
 
     @NotNull(message = "post_comments.post_id may not be null")
     @JoinColumn(name = "post_id")
-    @ManyToOne(optional = false, cascade = CascadeType.ALL)
+    @ManyToOne(optional = false, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Post post;
 
     @NotNull(message = "post_comments.user_id may not be null")

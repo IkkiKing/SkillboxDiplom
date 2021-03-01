@@ -35,7 +35,6 @@ public class CalendarService {
      * @return Календарь с кол-вом публикаций по датам
      * */
     public ResponseEntity<CalendarResponse> calendar(int year) {
-        CalendarResponse calendarResponse = new CalendarResponse();
         if (year == 0) {
             log.info("The year was setted as default");
             year = DateHelper.getCurrentDate().get(Calendar.YEAR);
@@ -49,7 +48,7 @@ public class CalendarService {
             postsMap = postsByYears.stream()
                     .collect(Collectors.toMap(CalendarCustom::getDate, CalendarCustom::getAmount));
         }
-
+        CalendarResponse calendarResponse = new CalendarResponse();
         calendarResponse.setYears(years);
         calendarResponse.setPosts(postsMap);
         return ResponseEntity.ok(calendarResponse);

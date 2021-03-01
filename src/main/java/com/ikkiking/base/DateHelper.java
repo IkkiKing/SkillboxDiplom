@@ -6,7 +6,7 @@ import java.util.TimeZone;
 
 public class DateHelper {
 
-    private static final TimeZone timeZone = TimeZone.getTimeZone("Europe/Moscow");
+    private static final TimeZone timeZone = TimeZone.getTimeZone("UTC");
 
     public static Calendar getCurrentDate(){
         return Calendar.getInstance(timeZone);

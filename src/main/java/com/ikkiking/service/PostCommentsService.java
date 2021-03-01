@@ -4,6 +4,7 @@ import com.ikkiking.api.request.CommentRequest;
 import com.ikkiking.api.response.CommentAddError;
 import com.ikkiking.api.response.CommentAddResponse;
 import com.ikkiking.base.ContextUser;
+import com.ikkiking.base.exception.CommentException;
 import com.ikkiking.model.Post;
 import com.ikkiking.model.PostComments;
 import com.ikkiking.repository.PostCommentsRepository;
@@ -36,35 +37,15 @@ public class PostCommentsService {
      * */
     @Transactional
     public ResponseEntity<CommentAddResponse> comment(CommentRequest commentRequest) {
-
-        CommentAddResponse commentAddResponse = new CommentAddResponse();
-
         String text = commentRequest.getText();
         Long parentId = commentRequest.getParentId();
         Long postId = commentRequest.getPostId();
 
-        //TODO: Возможно сделать через ControllerAdvice?
-        if (text == null || text.isEmpty()) {
-            commentAddResponse.setErrors(new CommentAddError("Текст комментария не задан"));
-            return new ResponseEntity(commentAddResponse, HttpStatus.BAD_REQUEST);
-        }
-        if (text.length() < 3) {
-            commentAddResponse.setErrors(new CommentAddError("Текст комментария слишком короткий"));
-            return new ResponseEntity(commentAddResponse, HttpStatus.BAD_REQUEST);
-        }
+        validateCommentRequest(text, parentId);
 
         Optional<Post> post = postRepository.findById(postId);
         if (!post.isPresent()) {
-            commentAddResponse.setErrors(new CommentAddError("Пост на который ссылается комментарий не найден!"));
-            return new ResponseEntity(commentAddResponse, HttpStatus.BAD_REQUEST);
-        }
-
-        if (parentId != null) {
-            Optional<PostComments> postComments = postCommentsRepository.findById(parentId);
-            if (!postComments.isPresent()) {
-                commentAddResponse.setErrors(new CommentAddError("Родительсткий комментарий не найден!"));
-                return new ResponseEntity(commentAddResponse, HttpStatus.BAD_REQUEST);
-            }
+            throw new CommentException("Пост на который ссылается комментарий не найден!");
         }
 
         PostComments comment = new PostComments();
@@ -75,9 +56,29 @@ public class PostCommentsService {
         comment.setUser(ContextUser.getUserFromContext(userRepository));
 
         PostComments postComments = postCommentsRepository.save(comment);
+        CommentAddResponse commentAddResponse = new CommentAddResponse();
         commentAddResponse.setId(postComments.getId());
+        commentAddResponse.setResult(true);
         return ResponseEntity.ok(commentAddResponse);
     }
 
+    /**
+     * Метод валидации комментария.
+     * */
+    private void validateCommentRequest(String text,
+                                        Long parentId) {
+        if (text == null || text.isEmpty()) {
+            throw new CommentException("Текст комментария не задан");
+        }
+        if (text.length() < 3) {
+            throw new CommentException("Текст комментария слишком короткий");
+        }
+        if (parentId != null) {
+            Optional<PostComments> postComments = postCommentsRepository.findById(parentId);
+            if (!postComments.isPresent()) {
+                throw new CommentException("Родительсткий комментарий не найден!");
+            }
+        }
+    }
 
 }

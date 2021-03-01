@@ -6,6 +6,8 @@ import com.ikkiking.api.response.*;
 import com.ikkiking.api.response.StatisticResponse.StatisticResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.ImageUtil;
+import com.ikkiking.base.exception.ImageUploadException;
+import com.ikkiking.base.exception.ProfileException;
 import com.ikkiking.base.exception.SettingNotFoundException;
 import com.ikkiking.base.exception.StatisticAccessException;
 import com.ikkiking.config.SecurityConfig;
@@ -20,7 +22,6 @@ import com.ikkiking.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,8 +63,7 @@ public class GeneralService {
     public ResponseEntity<StatisticResponse> myStatistic() {
 
         User user = ContextUser.getUserFromContext(userRepository);
-
-        StatisticCustom statisticCustom = postRepository.findByUserId(user.getId());
+        StatisticCustom statisticCustom = postRepository.findMyStatisticByUserId(user.getId());
 
         return ResponseEntity.ok(getStatisticResponse(statisticCustom));
     }
@@ -74,11 +74,9 @@ public class GeneralService {
     public ResponseEntity<StatisticResponse> allStatistic() {
 
         User user = ContextUser.getUserFromContext(userRepository);
-
         GlobalSettings globalSettings = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC").orElseThrow(
                 () -> new SettingNotFoundException("Check statistic settings")
         );
-
 
         //В случае если публичный показ статистики запрещен и юзер не модератор
         if (globalSettings.getValue().equals("NO") && !user.isModerator()) {
@@ -134,7 +132,6 @@ public class GeneralService {
 
         } else {
             log.warn("post from moderation request wasnt found or already moderated");
-            moderationResponse.setResult(false);
         }
         return ResponseEntity.ok(moderationResponse);
     }
@@ -160,7 +157,6 @@ public class GeneralService {
     public ResponseEntity<Object> image(MultipartFile multipartFile) {
 
         ImageResponse imageResponse = new ImageResponse();
-
         ImageUtil imageUtil = new ImageUtil(
                 multipartFile,
                 20,
@@ -168,23 +164,19 @@ public class GeneralService {
                 false,
                 imageDir
         );
-
-        //TODO: Возможно сделать через ControllerAdvice?
         if (imageUtil.getFormatName().equals("unknown")) {
             log.error("Unknown image format file");
             imageResponse.setErrors(new ImageErrorResponse("Выбран не поддерживаемый тип файла"));
-            return new ResponseEntity<>(imageResponse, HttpStatus.BAD_REQUEST);
+            throw new ImageUploadException(imageResponse);
         }
 
         try {
             imageUtil.uploadImage();
             imageResponse.setResult(true);
         } catch (IOException ex) {
-            //TODO: Возможно сделать через ControllerAdvice?
             log.error("Error file uploading");
-            imageResponse.setResult(false);
             imageResponse.setErrors(new ImageErrorResponse("Ошибка загрузки файла на сервер"));
-            return new ResponseEntity<>(imageResponse, HttpStatus.BAD_REQUEST);
+            throw new ImageUploadException(imageResponse);
         }
 
         return ResponseEntity.ok(imageUtil.getImagePath());
@@ -204,11 +196,6 @@ public class GeneralService {
                                                         String email,
                                                         String removePhoto,
                                                         String password) {
-
-        ProfileResponse profileResponse = new ProfileResponse();
-        profileResponse.setResult(true);
-        ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
-
         ImageUtil imageUtil = new ImageUtil(
                 photo,
                 20,
@@ -217,29 +204,25 @@ public class GeneralService {
                 avatarDir
         );
 
+        ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
+
         if (photo.getSize() / 1_000_000 > maxFileSize) {
             log.warn("photo size is over limit");
-
             profileErrorResponse.setPhoto("Файл превышает допустимый размер " + maxFileSize + " Мб");
-            profileResponse.setResult(false);
+            throw new ProfileException(profileErrorResponse);
+        }
+        if (imageUtil.getFormatName().equals("unknown")) {
+            log.warn("photo format is unknown");
+            profileErrorResponse.setPhoto("Выбран не поддерживаемый тип файла");
+            throw new ProfileException(profileErrorResponse);
+        }
 
-        } else {
-
-            if (imageUtil.getFormatName().equals("unknown")) {
-                log.warn("photo format is unknown");
-                profileErrorResponse.setPhoto("Выбран не поддерживаемый тип файла");
-                profileResponse.setResult(false);
-            } else {
-
-                try {
-                    imageUtil.uploadAvatar();
-                } catch (IOException ex) {
-                    log.error("Error photo uploading");
-                    profileErrorResponse.setPhoto("Ошибка загрузки файла на сервер");
-                    profileResponse.setResult(false);
-                    ex.printStackTrace();
-                }
-            }
+        try {
+            imageUtil.uploadAvatar();
+        } catch (IOException ex) {
+            log.error("Error photo uploading");
+            profileErrorResponse.setPhoto("Ошибка загрузки файла на сервер");
+            throw new ProfileException(profileErrorResponse);
         }
 
         ProfileRequest profileRequest = new ProfileRequest(
@@ -250,8 +233,10 @@ public class GeneralService {
                 removePhoto.equals("1") ? 1 : 0
         );
 
-        editProfile(profileResponse, profileErrorResponse, profileRequest);
+        editProfile(profileRequest);
 
+        ProfileResponse profileResponse = new ProfileResponse();
+        profileResponse.setResult(true);
         return ResponseEntity.ok(profileResponse);
     }
 
@@ -260,62 +245,62 @@ public class GeneralService {
      * */
     @Transactional
     public ResponseEntity<ProfileResponse> profile(ProfileRequest profileRequest) {
+        editProfile(profileRequest);
+
         ProfileResponse profileResponse = new ProfileResponse();
         profileResponse.setResult(true);
-        ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
-
-        editProfile(profileResponse, profileErrorResponse, profileRequest);
-
         return ResponseEntity.ok(profileResponse);
     }
 
     /**
      * Вспомогательный метод редактирования профиля.
      * */
-    private void editProfile(ProfileResponse profileResponse,
-                             ProfileErrorResponse profileErrorResponse,
-                             ProfileRequest profileRequest) {
+    private void editProfile(ProfileRequest profileRequest) {
 
-        String name = profileRequest.getName();
         String email = profileRequest.getEmail();
         String password = profileRequest.getPassword();
-        Integer removePhoto = profileRequest.getRemovePhoto();
-        String photo = profileRequest.getPhoto();
-
         User user = ContextUser.getUserFromContext(userRepository);
 
+        validateCredentials(user, email, password);
+
+        user.setName(profileRequest.getName());
+        user.setEmail(email);
+        if (profileRequest.getRemovePhoto() != null) {
+            if (profileRequest.getRemovePhoto() == 1) {
+                user.setPhoto(null);
+            }
+        }
+        if (password != null) {
+            user.setPassword(SecurityConfig.passwordEncoder()
+                    .encode(password));
+        }
+        if (profileRequest.getPhoto() != null) {
+            user.setPhoto(profileRequest.getPhoto());
+        }
+        userRepository.save(user);
+    }
+
+    /**
+     * Валидация данных пользователя
+     * */
+    private void validateCredentials(User user,
+                                     String email,
+                                     String password) {
+
+        ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
         //Если пароль есть, проверим его длину
         if (password != null && !password.isEmpty()) {
             if (password.length() < 6) {
                 profileErrorResponse.setPassword("Пароль короче 6 символов");
-                profileResponse.setResult(false);
+                throw new ProfileException(profileErrorResponse);
             }
         }
         //Если текущий email не совпадает с указанным
         if (!user.getEmail().equals(email)) {
             if (userRepository.findByEmail(email).isPresent()) {
                 profileErrorResponse.setEmail("Этот e-mail уже зарегистрирован");
-                profileResponse.setResult(false);
+                throw new ProfileException(profileErrorResponse);
             }
-        }
-        if (profileResponse.isResult()) {
-            user.setName(name);
-            user.setEmail(email);
-            if (removePhoto != null) {
-                if (removePhoto == 1) {
-                    user.setPhoto(null);
-                }
-            }
-            if (password != null) {
-                user.setPassword(SecurityConfig.passwordEncoder()
-                        .encode(password));
-            }
-            if (photo != null) {
-                user.setPhoto(photo);
-            }
-            userRepository.save(user);
-        } else {
-            profileResponse.setErrors(profileErrorResponse);
         }
     }
 }

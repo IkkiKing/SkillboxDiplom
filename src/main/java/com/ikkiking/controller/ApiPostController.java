@@ -22,7 +22,7 @@ public class ApiPostController {
     }
 
     @GetMapping("")
-    public ResponseEntity<GetPostResponse> getPosts(
+    public ResponseEntity<PostResponse> getPosts(
             @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "mode", required = false, defaultValue = "recent") String mode) {
@@ -31,7 +31,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<SearchPostResponse> searchPosts(
+    public ResponseEntity<PostResponse> searchPosts(
             @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "query", required = false, defaultValue = "") String query) {
@@ -40,7 +40,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/byDate")
-    public ResponseEntity<PostByDateResponse> getPostsByDate(
+    public ResponseEntity<PostResponse> getPostsByDate(
             @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "date") String date)
@@ -49,7 +49,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/byTag")
-    public ResponseEntity<PostByTagResponse> getPostsByTag(
+    public ResponseEntity<PostResponse> getPostsByTag(
             @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "tag", defaultValue = "") String tag) {
@@ -58,7 +58,7 @@ public class ApiPostController {
 
     @GetMapping("/moderation")
     @PreAuthorize("hasAuthority('user:moderate')")
-    public ResponseEntity<PostForModerationResponse> getPostsForModeration(
+    public ResponseEntity<PostResponse> getPostsForModeration(
             @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "status", defaultValue = "new") String status) {
@@ -68,7 +68,7 @@ public class ApiPostController {
 
     @GetMapping("/my")
     @PreAuthorize("hasAuthority('user:write')")
-    public ResponseEntity<MyPostResponse> getMyPosts(
+    public ResponseEntity<PostResponse> getMyPosts(
             @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
             @RequestParam(name = "status", defaultValue = "published") String status) {

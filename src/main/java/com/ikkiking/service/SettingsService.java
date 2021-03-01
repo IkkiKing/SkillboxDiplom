@@ -36,12 +36,11 @@ public class SettingsService {
      */
     public static boolean getSettingsValue(GlobalSettingsRepository globalSettingsRepository,
                                            String code) {
-
+        boolean value = false;
         Optional<GlobalSettings> valueDb = globalSettingsRepository.findByCode(code);
-        boolean value = true;
         if (valueDb.isPresent()) {
-            if (valueDb.get().getValue().equals("NO")) {
-                value = false;
+            if (valueDb.get().getValue().equals("YES")) {
+                value = true;
             }
         }
         return value;

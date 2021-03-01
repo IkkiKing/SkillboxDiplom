@@ -11,11 +11,10 @@ import java.util.Optional;
 @Repository
 public interface PostVoteRepository extends JpaRepository<PostVote, Long> {
 
-    @Query(value = "select count(*) from post_votes pv where pv.post_id = :postId and pv.value = 1", nativeQuery = true)
-    int countLikesByPostId(Long postId);
-
-    @Query(value = "select count(*) from post_votes pv where pv.post_id = :postId and pv.value = -1", nativeQuery = true)
-    int countDislikesByPostId(Long postId);
+    @Query(value = "select (select count(*) from post_votes pv where pv.post_id = :postId and pv.value = 1) as likes, " +
+                    "      (select count(*) from post_votes pv where pv.post_id = :postId and pv.value = -1) as dislikes from dual",
+                nativeQuery = true)
+    Votes getVotes(Long postId);
 
     Optional<PostVote> findByPostIdAndUserId(Long postId, Long userId);
 
