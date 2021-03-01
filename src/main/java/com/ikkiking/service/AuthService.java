@@ -4,13 +4,21 @@ import com.ikkiking.api.request.LoginRequest;
 import com.ikkiking.api.request.PasswordRequest;
 import com.ikkiking.api.request.RegisterRequest;
 import com.ikkiking.api.request.RestoreRequest;
-import com.ikkiking.api.response.AuthResponse.AuthCaptchaResponse;
-import com.ikkiking.api.response.AuthResponse.AuthLogoutResponse;
-import com.ikkiking.api.response.*;
+import com.ikkiking.api.response.auth.AuthCaptchaResponse;
+import com.ikkiking.api.response.auth.AuthLogoutResponse;
+import com.ikkiking.api.response.LoginResponse;
+import com.ikkiking.api.response.UserLoginResponse;
+import com.ikkiking.api.response.RegisterResponse;
+import com.ikkiking.api.response.RegisterErrorResponse;
+import com.ikkiking.api.response.RestoreResponse;
+import com.ikkiking.api.response.PasswordResponse;
+import com.ikkiking.api.response.PasswordErrorResponse;
 import com.ikkiking.base.CaptchaUtil;
 import com.ikkiking.base.DateHelper;
 import com.ikkiking.base.ImageUtil;
-import com.ikkiking.base.exception.*;
+import com.ikkiking.base.exception.RegistrationClosedException;
+import com.ikkiking.base.exception.RegistrationException;
+import com.ikkiking.base.exception.PasswordRestoreException;
 import com.ikkiking.config.SecurityConfig;
 import com.ikkiking.model.CaptchaCodes;
 import com.ikkiking.repository.CaptchaCodesRepository;
@@ -38,15 +46,15 @@ import java.util.Optional;
 @Slf4j
 public class AuthService {
 
+    @Value("${authService.captchaDeleteHours}")
+    private static int captchaDeleteHours;
+
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final GlobalSettingsRepository globalSettingsRepository;
     private final CaptchaCodesRepository captchaCodesRepository;
     private final JavaMailSender emailSender;
-    @Value("${authService.captchaDeleteHours}")
-    private static int captchaDeleteHours;
-
 
     @Autowired
     public AuthService(AuthenticationManager authenticationManager,
@@ -118,7 +126,7 @@ public class AuthService {
      * */
     @Transactional
     public ResponseEntity<AuthCaptchaResponse> captcha() {
-        CaptchaUtil captchaUtil = new CaptchaUtil(4,100, 35);
+        CaptchaUtil captchaUtil = new CaptchaUtil(4, 100, 35);
         String code = captchaUtil.getCode();
         String secretCode = captchaUtil.getSecretCode();
 
@@ -189,7 +197,7 @@ public class AuthService {
             registerErrorResponse.setName("Имя не может быть пустым");
             throw new RegistrationException(registerErrorResponse);
         }
-        if (registerRequest.getPassword().isEmpty() ||registerRequest.getPassword() == null) {
+        if (registerRequest.getPassword().isEmpty() || registerRequest.getPassword() == null) {
             registerErrorResponse.setPassword("Пароль не может быть пустым");
             throw new RegistrationException(registerErrorResponse);
         }
@@ -219,17 +227,18 @@ public class AuthService {
 
         if (userOptional.isPresent()) {
             com.ikkiking.model.User user = userOptional.get();
-            String userCode = RandomStringUtils.random(40, true, true);//TODO: 40 move in config variable
+            //TODO: 40 move in config variable
+            String userCode = RandomStringUtils.random(40, true, true);
             user.setCode(userCode);
             userRepository.save(user);
             restoreResponse.setResult(true);
             ImageUtil.MailUtil.sendMail(emailSender,
                     restoreRequest.getEmail(),
                     "Восстановление пароля DevPub",
-                    "Для восстановления вашего пароля, пройдите по ссылке " +
-                            "http://localhost:8080/login/change-password/" + userCode);
+                    "Для восстановления вашего пароля, пройдите по ссылке "
+                            + "http://localhost:8080/login/change-password/" + userCode);
 
-        }else{
+        } else {
             log.warn("User not found. Email wasnt sended.");
         }
         return ResponseEntity.ok(restoreResponse);
@@ -253,11 +262,11 @@ public class AuthService {
                     .encode(passwordRequest.getPassword()));
             user.setCode(null);
             userRepository.save(user);
-        }else{
+        } else {
             log.warn("The link for restore password is too old.");
             PasswordErrorResponse passwordErrorResponse = new PasswordErrorResponse();
-            passwordErrorResponse.setCode("Ссылка для восстановления пароля устарела." +
-                    "<a href =\"/auth/restore\">Запросить ссылку снова</a>");
+            passwordErrorResponse.setCode("Ссылка для восстановления пароля устарела."
+                    + "<a href =\"/auth/restore\">Запросить ссылку снова</a>");
             throw new PasswordRestoreException(passwordErrorResponse);
         }
         return ResponseEntity.ok(passwordResponse);
@@ -275,8 +284,8 @@ public class AuthService {
             passwordErrorResponse.setPassword("Пароль не может быть пустым");
             throw new PasswordRestoreException(passwordErrorResponse);
         }
-
-        if (password.length() < 6) {//TODO: move in config variable
+        //TODO: move in config variable
+        if (password.length() < 6) {
             passwordErrorResponse.setPassword("Пароль короче 6 символов");
             throw new PasswordRestoreException(passwordErrorResponse);
         }

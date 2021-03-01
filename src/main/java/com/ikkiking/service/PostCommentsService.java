@@ -1,7 +1,6 @@
 package com.ikkiking.service;
 
 import com.ikkiking.api.request.CommentRequest;
-import com.ikkiking.api.response.CommentAddError;
 import com.ikkiking.api.response.CommentAddResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.exception.CommentException;
@@ -11,11 +10,9 @@ import com.ikkiking.repository.PostCommentsRepository;
 import com.ikkiking.repository.PostRepository;
 import com.ikkiking.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Date;
 import java.util.Optional;
 
@@ -26,7 +23,9 @@ public class PostCommentsService {
     private final UserRepository userRepository;
 
     @Autowired
-    public PostCommentsService(PostCommentsRepository postCommentsRepository, PostRepository postRepository, UserRepository userRepository) {
+    public PostCommentsService(PostCommentsRepository postCommentsRepository,
+                               PostRepository postRepository,
+                               UserRepository userRepository) {
         this.postCommentsRepository = postCommentsRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;

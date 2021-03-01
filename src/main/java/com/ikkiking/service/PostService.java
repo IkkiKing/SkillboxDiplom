@@ -1,16 +1,34 @@
 package com.ikkiking.service;
 
-
 import com.ikkiking.api.request.PostRequest;
 import com.ikkiking.api.request.VoteRequest;
-import com.ikkiking.api.response.PostResponse.*;
+import com.ikkiking.api.response.post.PostForResponse;
+import com.ikkiking.api.response.post.PostResponse;
+import com.ikkiking.api.response.post.UserResponse;
+import com.ikkiking.api.response.post.PostByIdResponse;
+import com.ikkiking.api.response.post.CommentResponse;
+import com.ikkiking.api.response.post.CommentUserResponse;
+import com.ikkiking.api.response.post.PostReturnResponse;
+import com.ikkiking.api.response.post.PostErrorResponse;
 import com.ikkiking.api.response.VoteResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.DateHelper;
 import com.ikkiking.base.exception.PostNotFoundException;
 import com.ikkiking.base.exception.VoteException;
-import com.ikkiking.model.*;
-import com.ikkiking.repository.*;
+import com.ikkiking.model.Post;
+import com.ikkiking.model.User;
+import com.ikkiking.model.ModerationStatus;
+import com.ikkiking.model.Tag;
+import com.ikkiking.model.Tag2Post;
+import com.ikkiking.model.PostVote;
+import com.ikkiking.repository.PostRepository;
+import com.ikkiking.repository.PostVoteRepository;
+import com.ikkiking.repository.PostCommentsRepository;
+import com.ikkiking.repository.TagRepository;
+import com.ikkiking.repository.Tag2PostRepository;
+import com.ikkiking.repository.UserRepository;
+import com.ikkiking.repository.GlobalSettingsRepository;
+import com.ikkiking.repository.Votes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -21,8 +39,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -143,7 +163,7 @@ public class PostService {
     }
 
     /**
-     * Поиск постов для модерации
+     * Поиск постов для модерации.
      *
      * @param limit  кол-во выводимых постов
      * @param offset отступ от начала страницы
@@ -160,8 +180,8 @@ public class PostService {
 
         String email = ContextUser.getEmailFromContext();
 
-        Page<Post> postPage = status.equalsIgnoreCase(ModerationStatus.NEW.toString()) ?
-                postRepository.findAllForModeration(sortedByMode, status) :
+        Page<Post> postPage = status.equalsIgnoreCase(ModerationStatus.NEW.toString())
+                ? postRepository.findAllForModeration(sortedByMode, status) :
                 postRepository.findAllMyModeration(sortedByMode, email, status);
 
         PostResponse postResponse = convertToPostResponse(postPage);
@@ -188,22 +208,20 @@ public class PostService {
         int isActive = 1;
         String moderationStatus = null;
         switch (status) {
-            case "inactive": {
+            case "inactive":
                 isActive = 0;
                 break;
-            }
-            case "pending": {
+            case "pending":
                 moderationStatus = "NEW";
                 break;
-            }
-            case "declined": {
+            case "declined":
                 moderationStatus = "DECLINED";
                 break;
-            }
-            case "published": {
+            case "published":
                 moderationStatus = "ACCEPTED";
                 break;
-            }
+            default:
+                log.warn("UNKNOWN STATUS FROM FRONT");
         }
         Page<Post> postPage = postRepository.findMyPosts(
                 sortedByMode,
@@ -239,27 +257,23 @@ public class PostService {
         log.info("Posts request by mode: " + mode + ". Offset is " + offset + ". Limit is " + limit);
 
         switch (mode) {
-            case "early": {
+            case "early":
                 sortedByMode = PageRequest.of(page, limit, Sort.by("time").ascending());
                 posts = postRepository.findAll(sortedByMode);
                 break;
-            }
-            case "popular": {
+            case "popular":
                 sortedByMode = PageRequest.of(page, limit);
                 posts = postRepository.findAllByPopular(sortedByMode);
                 break;
-            }
-            case "best": {
+            case "best":
                 sortedByMode = PageRequest.of(page, limit);
                 posts = postRepository.findAllByBest(sortedByMode);
                 break;
-            }
             //RECENT
-            default: {
+            default:
                 sortedByMode = PageRequest.of(page, limit, Sort.by("time").descending());
                 posts = postRepository.findAll(sortedByMode);
                 break;
-            }
         }
         return posts;
     }
@@ -302,8 +316,8 @@ public class PostService {
      * @param id Идентификатор поста
      */
     public ResponseEntity<PostByIdResponse> postById(long id) {
-        Post post = postRepository.findById(id).orElseThrow(
-                () -> new PostNotFoundException("Пост не найден!"));
+        Post post = postRepository.findById(id).orElseThrow(() ->
+                new PostNotFoundException("Пост не найден!"));
         UserResponse userResponse = new UserResponse(
                 post.getUser().getId(),
                 post.getUser().getName());
@@ -336,7 +350,7 @@ public class PostService {
     }
 
     /**
-     * Вспомогательный метод заполняет коллекцию DTO CommentResponse
+     * Вспомогательный метод заполняет коллекцию DTO CommentResponse.
      */
     private List<CommentResponse> getCommentResponseList(Post post) {
         return post.getCommentsList().stream()
@@ -387,7 +401,8 @@ public class PostService {
             post.setModerationStatus(ModerationStatus.NEW);
 
             //Если юзер является модератором или предмодерация отключена, пост сразу становится принят
-            if (!SettingsService.getSettingsValue(globalSettingsRepository, "POST_PREMODERATION") || user.isModerator()) {
+            if (!SettingsService.getSettingsValue(globalSettingsRepository, "POST_PREMODERATION")
+                    || user.isModerator()) {
                 post.setModerationStatus(ModerationStatus.ACCEPTED);
             } else {
                 post.setModerationStatus(ModerationStatus.NEW);
@@ -397,7 +412,7 @@ public class PostService {
             post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
             post.setTitle(postRequest.getTitle());
             post.setText(postRequest.getText());
-            post.setViewCount(0l);
+            post.setViewCount(0L);
 
             Post newPost = postRepository.save(post);
             setTagsToPost(postRequest.getTags(), newPost.getId());
@@ -444,13 +459,12 @@ public class PostService {
             List<Tag> tagList = tagRepository.findAllByNameIn(tags);
             tag2PostRepository.deleteAllByPostId(postId);
 
-            List<Tag2Post> tag2PostList = tagList.stream().map(m ->
-                    {
-                        Tag2Post tag2Post = new Tag2Post();
-                        tag2Post.setTagId(m.getId());
-                        tag2Post.setPostId(postId);
-                        return tag2Post;
-                    }
+            List<Tag2Post> tag2PostList = tagList.stream().map(m -> {
+                    Tag2Post tag2Post = new Tag2Post();
+                    tag2Post.setTagId(m.getId());
+                    tag2Post.setPostId(postId);
+                    return tag2Post;
+                }
             ).collect(Collectors.toList());
             tag2PostRepository.saveAll(tag2PostList);
         }
@@ -501,14 +515,13 @@ public class PostService {
 
     private VoteResponse getVoteResponse(VoteRequest voteRequest,
                                          Integer value) {
-        Post post = postRepository.findById(voteRequest.getPostId()).orElseThrow(
-                () -> new VoteException("Post not found in DB"));
+        Post post = postRepository.findById(voteRequest.getPostId()).orElseThrow(() ->
+                new VoteException("Post not found in DB"));
 
         User user = ContextUser.getUserFromContext(userRepository);
         Optional<PostVote> postVoteOptional = postVoteRepository.findByPostIdAndUserId(
                 voteRequest.getPostId(),
                 user.getId());
-        VoteResponse voteResponse = new VoteResponse();
 
         PostVote postVote = new PostVote();
         //Если запись уже есть в БД
@@ -525,8 +538,7 @@ public class PostService {
         postVote.setTime(DateHelper.getCurrentDate().getTime());
         postVote.setValue(value);
         postVoteRepository.save(postVote);
-        voteResponse.setResult(true);
-        return voteResponse;
+        return new VoteResponse(true);
     }
 }
 

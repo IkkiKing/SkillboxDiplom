@@ -5,7 +5,6 @@ import com.github.cage.IGenerator;
 import com.github.cage.image.Painter;
 import lombok.Data;
 import org.apache.commons.lang3.RandomStringUtils;
-
 import java.util.Base64;
 import java.util.Random;
 
@@ -30,8 +29,8 @@ public class CaptchaUtil {
     /**
      * Возвращает объект для формирования капчи.
      * */
-    private void setupCaptchaUtil(){
-        IGenerator<String> iGenerator = () ->  RandomStringUtils.random(captchaLength, true, true);
+    private void setupCaptchaUtil() {
+        IGenerator<String> generator = () -> RandomStringUtils.random(captchaLength, true, true);
         Painter painter = new Painter(
                 captchaWidth,
                 captchaHeight,
@@ -45,11 +44,12 @@ public class CaptchaUtil {
                 null,
                 "png",
                 0.5f,
-                iGenerator,
+                generator,
                 null);
 
         code = cage.getTokenGenerator().next();
-        secretCode = RandomStringUtils.random(20, true, true);//TODO: 20 move in config variable
+        //TODO: 20 move in config variable
+        secretCode = RandomStringUtils.random(20, true, true);
         imageString = "data:image/png;base64, " + Base64.getEncoder().encodeToString(cage.draw(code));
     }
 }

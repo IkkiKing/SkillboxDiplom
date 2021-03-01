@@ -1,15 +1,13 @@
 package com.ikkiking.service;
 
-import com.ikkiking.api.response.TagResponse.Tag;
-import com.ikkiking.api.response.TagResponse.TagResponse;
+import com.ikkiking.api.response.tag.Tag;
+import com.ikkiking.api.response.tag.TagResponse;
 import com.ikkiking.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @Service
 public class TagService {
@@ -23,7 +21,7 @@ public class TagService {
     }
 
     /**
-     * Возвращает список тэгов блога
+     * Возвращает список тэгов блога.
      * */
     public ResponseEntity<TagResponse> tag(String query) {
         List<Tag> tagList = tagRepository.findAllByTags(query).stream()

@@ -4,14 +4,30 @@ import com.ikkiking.api.request.CommentRequest;
 import com.ikkiking.api.request.ModerationRequest;
 import com.ikkiking.api.request.ProfileRequest;
 import com.ikkiking.api.request.SettingsRequest;
-import com.ikkiking.api.response.*;
-import com.ikkiking.api.response.StatisticResponse.StatisticResponse;
-import com.ikkiking.api.response.TagResponse.TagResponse;
-import com.ikkiking.service.*;
+import com.ikkiking.api.response.InitResponse;
+import com.ikkiking.api.response.SettingsResponse;
+import com.ikkiking.api.response.CalendarResponse;
+import com.ikkiking.api.response.ModerationResponse;
+import com.ikkiking.api.response.CommentAddResponse;
+import com.ikkiking.api.response.ProfileResponse;
+import com.ikkiking.api.response.statistic.StatisticResponse;
+import com.ikkiking.api.response.tag.TagResponse;
+import com.ikkiking.service.SettingsService;
+import com.ikkiking.service.TagService;
+import com.ikkiking.service.CalendarService;
+import com.ikkiking.service.GeneralService;
+import com.ikkiking.service.PostCommentsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -26,7 +42,12 @@ public class ApiGeneralController {
     private final PostCommentsService postCommentsService;
 
     @Autowired
-    public ApiGeneralController(InitResponse initResponse, SettingsService settingsService, TagService tagService, CalendarService calendarService, GeneralService generalService, PostCommentsService postCommentsService) {
+    public ApiGeneralController(InitResponse initResponse,
+                                SettingsService settingsService,
+                                TagService tagService,
+                                CalendarService calendarService,
+                                GeneralService generalService,
+                                PostCommentsService postCommentsService) {
         this.initResponse = initResponse;
         this.settingsService = settingsService;
         this.tagService = tagService;
@@ -57,7 +78,8 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/calendar")
-    public ResponseEntity<CalendarResponse> getCalendar(@RequestParam(name = "year", required = false, defaultValue = "0") int year) {
+    public ResponseEntity<CalendarResponse> getCalendar(
+            @RequestParam(name = "year", required = false, defaultValue = "0") int year) {
         return calendarService.calendar(year);
     }
 

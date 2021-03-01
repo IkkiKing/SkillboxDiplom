@@ -1,4 +1,4 @@
-package com.ikkiking.api.response.PostResponse;
+package com.ikkiking.api.response.post;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

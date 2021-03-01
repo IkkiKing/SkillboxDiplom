@@ -1,4 +1,4 @@
-package com.ikkiking.api.response.StatisticResponse;
+package com.ikkiking.api.response.statistic;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -9,10 +9,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 public class ContextUser {
 
-    public static String getEmailFromContext(){
+    public static String getEmailFromContext() {
         String email = null;
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (!auth.getPrincipal().equals("anonymousUser")){
+        if (!auth.getPrincipal().equals("anonymousUser")) {
             User user = (User) auth.getPrincipal();
             email = user.getUsername();
         }
@@ -20,11 +20,12 @@ public class ContextUser {
     }
 
     //Получение юзера из контекста
-    public static com.ikkiking.model.User getUserFromContext(UserRepository userRepository) throws UsernameNotFoundException {
-        String email = ContextUser.getEmailFromContext();
+    public static com.ikkiking.model.User getUserFromContext(UserRepository userRepository)
+            throws UsernameNotFoundException {
 
-        return userRepository.findByEmail(email).orElseThrow(
-                () -> new UsernameNotFoundException("user " + email + " not found")
+        String email = ContextUser.getEmailFromContext();
+        return userRepository.findByEmail(email).orElseThrow(() ->
+                new UsernameNotFoundException("user " + email + " not found")
         );
     }
 }

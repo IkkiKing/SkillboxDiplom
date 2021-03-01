@@ -1,8 +1,7 @@
-package com.ikkiking.api.response.PostResponse;
+package com.ikkiking.api.response.post;
 
 
 import lombok.Data;
-
 import java.util.List;
 
 @Data

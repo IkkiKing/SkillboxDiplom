@@ -2,13 +2,22 @@ package com.ikkiking.controller;
 
 import com.ikkiking.api.request.PostRequest;
 import com.ikkiking.api.request.VoteRequest;
-import com.ikkiking.api.response.PostResponse.*;
+import com.ikkiking.api.response.post.PostResponse;
+import com.ikkiking.api.response.post.PostByIdResponse;
+import com.ikkiking.api.response.post.PostReturnResponse;
 import com.ikkiking.api.response.VoteResponse;
 import com.ikkiking.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/post")
@@ -43,8 +52,7 @@ public class ApiPostController {
     public ResponseEntity<PostResponse> getPostsByDate(
             @RequestParam(name = "limit", required = false, defaultValue = "10") int limit,
             @RequestParam(name = "offset", required = false, defaultValue = "0") int offset,
-            @RequestParam(name = "date") String date)
-    {
+            @RequestParam(name = "date") String date) {
         return postService.postsByDate(limit, offset, date);
     }
 

@@ -1,11 +1,11 @@
-package com.ikkiking.api.response.PostResponse;
+package com.ikkiking.api.response.tag;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class UserResponse {
-    private Long id;
+public class Tag {
     private String name;
+    private double weight;
 }

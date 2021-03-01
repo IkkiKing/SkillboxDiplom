@@ -7,7 +7,6 @@ import org.imgscalr.Scalr;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -129,7 +128,8 @@ public class ImageUtil {
                                     String text) {
 
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("DeveloperSmelovEA@gmail.com");//TODO: move in config variable
+            //TODO: move in config variable
+            message.setFrom("DeveloperSmelovEA@gmail.com");
             message.setTo(to);
             message.setSubject(subject);
             message.setText(text);

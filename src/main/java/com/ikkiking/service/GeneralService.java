@@ -2,8 +2,12 @@ package com.ikkiking.service;
 
 import com.ikkiking.api.request.ModerationRequest;
 import com.ikkiking.api.request.ProfileRequest;
-import com.ikkiking.api.response.*;
-import com.ikkiking.api.response.StatisticResponse.StatisticResponse;
+import com.ikkiking.api.response.ModerationResponse;
+import com.ikkiking.api.response.ImageResponse;
+import com.ikkiking.api.response.ImageErrorResponse;
+import com.ikkiking.api.response.ProfileResponse;
+import com.ikkiking.api.response.ProfileErrorResponse;
+import com.ikkiking.api.response.statistic.StatisticResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.ImageUtil;
 import com.ikkiking.base.exception.ImageUploadException;
@@ -26,27 +30,24 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.util.Optional;
-
 
 @Service
 @Slf4j
 public class GeneralService {
 
+    @Value("${image.filepath}")
+    private final static String IMAGE_DIR = "src/main/resources/upload";
+    @Value("${avatar.filePath}")
+    private final static String AVATAR_DIR = "src/main/resources/upload/avatar";
+    @Value("${avatar.fileSize}")
+    private final static long MAX_FILE_SIZE = 5_000_000;
+
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final GlobalSettingsRepository globalSettingsRepository;
 
-    @Value("${image.filepath}")
-    private final static String imageDir = "src/main/resources/upload";
-
-    @Value("${avatar.filePath}")
-    private final static String avatarDir = "src/main/resources/upload/avatar";
-
-    @Value("${avatar.fileSize}")
-    private final static long maxFileSize = 5;
 
     @Autowired
     public GeneralService(PostRepository postRepository,
@@ -74,8 +75,8 @@ public class GeneralService {
     public ResponseEntity<StatisticResponse> allStatistic() {
 
         User user = ContextUser.getUserFromContext(userRepository);
-        GlobalSettings globalSettings = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC").orElseThrow(
-                () -> new SettingNotFoundException("Check statistic settings")
+        GlobalSettings globalSettings = globalSettingsRepository.findByCode("STATISTICS_IS_PUBLIC").orElseThrow(() ->
+                new SettingNotFoundException("Check statistic settings")
         );
 
         //В случае если публичный показ статистики запрещен и юзер не модератор
@@ -94,10 +95,10 @@ public class GeneralService {
         if (statistic.getPostsCount() == 0) {
             log.info("Posts count equal zero");
             return new StatisticResponse(
-                    0l,
-                    0l,
-                    0l,
-                    0l,
+                    0L,
+                    0L,
+                    0L,
+                    0L,
                     null);
         } else {
             return new StatisticResponse(
@@ -105,7 +106,7 @@ public class GeneralService {
                     statistic.getLikesCount(),
                     statistic.getDislikesCount(),
                     statistic.getViewsCount(),
-                    statistic.getFirstPublication().getTime() / 1000l);
+                    statistic.getFirstPublication().getTime() / 1000L);
         }
     }
 
@@ -162,7 +163,7 @@ public class GeneralService {
                 20,
                 true,
                 false,
-                imageDir
+                IMAGE_DIR
         );
         if (imageUtil.getFormatName().equals("unknown")) {
             log.error("Unknown image format file");
@@ -201,14 +202,12 @@ public class GeneralService {
                 20,
                 true,
                 true,
-                avatarDir
-        );
-
+                AVATAR_DIR);
         ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
 
-        if (photo.getSize() / 1_000_000 > maxFileSize) {
+        if (photo.getSize() > MAX_FILE_SIZE) {
             log.warn("photo size is over limit");
-            profileErrorResponse.setPhoto("Файл превышает допустимый размер " + maxFileSize + " Мб");
+            profileErrorResponse.setPhoto("Файл превышает допустимый размер " + MAX_FILE_SIZE + " Мб");
             throw new ProfileException(profileErrorResponse);
         }
         if (imageUtil.getFormatName().equals("unknown")) {
@@ -216,7 +215,6 @@ public class GeneralService {
             profileErrorResponse.setPhoto("Выбран не поддерживаемый тип файла");
             throw new ProfileException(profileErrorResponse);
         }
-
         try {
             imageUtil.uploadAvatar();
         } catch (IOException ex) {
@@ -224,14 +222,12 @@ public class GeneralService {
             profileErrorResponse.setPhoto("Ошибка загрузки файла на сервер");
             throw new ProfileException(profileErrorResponse);
         }
-
         ProfileRequest profileRequest = new ProfileRequest(
                 imageUtil.getImagePath(),
                 name,
                 email,
                 password,
-                removePhoto.equals("1") ? 1 : 0
-        );
+                removePhoto.equals("1") ? 1 : 0);
 
         editProfile(profileRequest);
 
@@ -281,7 +277,7 @@ public class GeneralService {
     }
 
     /**
-     * Валидация данных пользователя
+     * Валидация данных пользователя.
      * */
     private void validateCredentials(User user,
                                      String email,

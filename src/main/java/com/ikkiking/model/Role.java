@@ -1,11 +1,10 @@
 package com.ikkiking.model;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public enum  Role {
+public enum Role {
     USER(Set.of(Permission.USER)),
     MODERATOR(Set.of(Permission.USER, Permission.MODERATE));
 
@@ -15,11 +14,11 @@ public enum  Role {
         this.permissions = permissions;
     }
 
-    public Set<Permission> getPermissions(){
+    public Set<Permission> getPermissions() {
         return permissions;
     }
 
-    public Set<SimpleGrantedAuthority> getAuthorities(){
+    public Set<SimpleGrantedAuthority> getAuthorities() {
         return permissions.stream()
                 .map(p -> new SimpleGrantedAuthority(p.getPermission()))
                 .collect(Collectors.toSet());
