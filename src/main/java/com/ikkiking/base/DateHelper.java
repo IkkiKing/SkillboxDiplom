@@ -12,7 +12,6 @@ public class DateHelper {
         return Calendar.getInstance(TIME_ZONE);
     }
 
-
     //Получаем правильную дату для поста из таймстампа
     public static Date getRightDateFromTimeStamp(Long timeStamp) {
 

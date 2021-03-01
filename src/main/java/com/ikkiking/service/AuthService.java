@@ -15,7 +15,7 @@ import com.ikkiking.api.response.PasswordResponse;
 import com.ikkiking.api.response.PasswordErrorResponse;
 import com.ikkiking.base.CaptchaUtil;
 import com.ikkiking.base.DateHelper;
-import com.ikkiking.base.ImageUtil;
+import com.ikkiking.base.MailUtil;
 import com.ikkiking.base.exception.RegistrationClosedException;
 import com.ikkiking.base.exception.RegistrationException;
 import com.ikkiking.base.exception.PasswordRestoreException;
@@ -46,14 +46,30 @@ import java.util.Optional;
 @Slf4j
 public class AuthService {
 
-    @Value("${authService.captchaDeleteHours}")
-    private static int captchaDeleteHours;
-    private static final int PASSWORD_MIN_LENGTH = 6;
-    private static final int RESTORE_CODE_LENGTH = 20;
-    private static final int CAPTCHA_LENGTH = 4;
-    private static final int CAPTCHA_WIDTH = 100;
-    private static final int CAPTCHA_HEIGHT = 35;
-    private static final int SECRET_CODE_LENGTH = 35;
+    @Value("${captcha.delete.hours}")
+    private int captchaDeleteHours;
+
+    @Value("${password.min.length}")
+    private int passwordMinLength;
+
+    @Value("${password.restore.code.length}")
+    private int passwordRestoreCodeLength;
+
+    @Value("${captcha.length}")
+    private int captchaLength;
+
+    @Value("${captcha.width}")
+    private int captchaWidth;
+
+    @Value("${captcha.height}")
+    private int captchaHeight;
+
+    @Value("${captcha.secretCode.length}")
+    private int captchaSecretCodeLength;
+
+    @Value("${spring.mail.email}")
+    private String emailFromRestore;
+
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -132,7 +148,11 @@ public class AuthService {
      * */
     @Transactional
     public ResponseEntity<AuthCaptchaResponse> captcha() {
-        CaptchaUtil captchaUtil = new CaptchaUtil(CAPTCHA_LENGTH, CAPTCHA_WIDTH, CAPTCHA_HEIGHT, SECRET_CODE_LENGTH);
+        CaptchaUtil captchaUtil = new CaptchaUtil(
+                captchaLength,
+                captchaWidth,
+                captchaHeight,
+                captchaSecretCodeLength);
         String code = captchaUtil.getCode();
         String secretCode = captchaUtil.getSecretCode();
 
@@ -207,7 +227,7 @@ public class AuthService {
             registerErrorResponse.setPassword("Пароль не может быть пустым");
             throw new RegistrationException(registerErrorResponse);
         }
-        if (registerRequest.getPassword().length() < PASSWORD_MIN_LENGTH) { //TODO: move in config variable
+        if (registerRequest.getPassword().length() < passwordMinLength) {
             registerErrorResponse.setPassword("Пароль не может быть короче 6 символов");
             throw new RegistrationException(registerErrorResponse);
         }
@@ -233,11 +253,12 @@ public class AuthService {
 
         if (userOptional.isPresent()) {
             com.ikkiking.model.User user = userOptional.get();
-            String userCode = RandomStringUtils.random(RESTORE_CODE_LENGTH, true, true);
+            String userCode = RandomStringUtils.random(passwordRestoreCodeLength, true, true);
             user.setCode(userCode);
             userRepository.save(user);
             restoreResponse.setResult(true);
-            ImageUtil.MailUtil.sendMail(emailSender,
+            MailUtil.sendMail(emailSender,
+                    emailFromRestore,
                     restoreRequest.getEmail(),
                     "Восстановление пароля DevPub",
                     "Для восстановления вашего пароля, пройдите по ссылке "
@@ -284,17 +305,14 @@ public class AuthService {
         PasswordErrorResponse passwordErrorResponse = new PasswordErrorResponse();
 
         String password = passwordRequest.getPassword();
-
         if (password.isEmpty() || password == null) {
             passwordErrorResponse.setPassword("Пароль не может быть пустым");
             throw new PasswordRestoreException(passwordErrorResponse);
         }
-        //TODO: move in config variable
-        if (password.length() < PASSWORD_MIN_LENGTH) {
+        if (password.length() < passwordMinLength) {
             passwordErrorResponse.setPassword("Пароль короче 6 символов");
             throw new PasswordRestoreException(passwordErrorResponse);
         }
-
         if (captchaCodesRepository.countByCodeAndSecretCode(
                 passwordRequest.getCaptcha(),
                 passwordRequest.getCaptchaSecret()) == 0) {

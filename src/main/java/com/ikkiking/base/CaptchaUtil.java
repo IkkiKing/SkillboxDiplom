@@ -11,10 +11,10 @@ import java.util.Random;
 @Data
 public class CaptchaUtil {
 
-    private int captchaLength;
-    private int captchaWidth;
-    private int captchaHeight;
-    private int secretCodeLength;
+    private final int captchaLength;
+    private final int captchaWidth;
+    private final int captchaHeight;
+    private final int secretCodeLength;
 
     private String code;
     private String secretCode;

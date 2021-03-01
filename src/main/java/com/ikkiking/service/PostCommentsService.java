@@ -10,6 +10,7 @@ import com.ikkiking.repository.PostCommentsRepository;
 import com.ikkiking.repository.PostRepository;
 import com.ikkiking.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,9 @@ import java.util.Optional;
 @Service
 public class PostCommentsService {
 
-    private static final int COMMENT_MIN_TEXT_LENGTH = 50;
+    @Value("${comment.text.min.length}")
+    private int commentTexMinLength;
+
     private final PostCommentsRepository postCommentsRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
@@ -71,7 +74,7 @@ public class PostCommentsService {
         if (text == null || text.isEmpty()) {
             throw new CommentException("Текст комментария не задан");
         }
-        if (text.length() < COMMENT_MIN_TEXT_LENGTH) {
+        if (text.length() < commentTexMinLength) {
             throw new CommentException("Текст комментария слишком короткий");
         }
         if (parentId != null) {

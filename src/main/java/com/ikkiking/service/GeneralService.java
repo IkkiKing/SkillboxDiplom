@@ -9,7 +9,7 @@ import com.ikkiking.api.response.ProfileResponse;
 import com.ikkiking.api.response.ProfileErrorResponse;
 import com.ikkiking.api.response.statistic.StatisticResponse;
 import com.ikkiking.base.ContextUser;
-import com.ikkiking.base.ImageUtil;
+import com.ikkiking.base.FileUtil;
 import com.ikkiking.base.exception.ImageUploadException;
 import com.ikkiking.base.exception.ProfileException;
 import com.ikkiking.base.exception.SettingNotFoundException;
@@ -37,17 +37,31 @@ import java.util.Optional;
 @Slf4j
 public class GeneralService {
 
-    private static final String IMAGE_DIR = "src/main/resources/upload";
-    private static final String AVATAR_DIR = "src/main/resources/upload/avatar";
-    private static final long MAX_FILE_SIZE = 5_000_000;
-    private static final int PASSWORD_MIN_LENGTH = 6;
-    private static final int IMAGE_NAME_LENGTH = 6;
+    @Value("${file.name.length}")
+    private int fileNameLength;
+
+    @Value("${file.image.dir}")
+    private String imageDir;
+
+    @Value("${file.photo.dir}")
+    private String photoDir;
+
+    @Value("${file.photo.size}")
+    private long maxPhotoSize;
+
+    @Value("${file.photo.width}")
+    private int photoWidth;
+
+    @Value("${file.photo.height}")
+    private int photoHeight;
+
+    @Value("${password.min.length}")
+    private int passwordMinLength;
 
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final GlobalSettingsRepository globalSettingsRepository;
-
 
     @Autowired
     public GeneralService(PostRepository postRepository,
@@ -158,21 +172,18 @@ public class GeneralService {
     public ResponseEntity<Object> image(MultipartFile multipartFile) {
 
         ImageResponse imageResponse = new ImageResponse();
-        ImageUtil imageUtil = new ImageUtil(
+        FileUtil fileUtil = new FileUtil(
                 multipartFile,
-                IMAGE_NAME_LENGTH,
-                true,
-                false,
-                IMAGE_DIR
-        );
-        if (imageUtil.getFormatName().equals("unknown")) {
+                imageDir,
+                fileNameLength);
+        if (fileUtil.getFormatName().equals("unknown")) {
             log.error("Unknown image format file");
             imageResponse.setErrors(new ImageErrorResponse("Выбран не поддерживаемый тип файла"));
             throw new ImageUploadException(imageResponse);
         }
 
         try {
-            imageUtil.uploadImage();
+            fileUtil.uploadImage();
             imageResponse.setResult(true);
         } catch (IOException ex) {
             log.error("Error file uploading");
@@ -180,7 +191,7 @@ public class GeneralService {
             throw new ImageUploadException(imageResponse);
         }
 
-        return ResponseEntity.ok(imageUtil.getImagePath());
+        return ResponseEntity.ok(fileUtil.getFilePath());
     }
 
     /**
@@ -197,33 +208,31 @@ public class GeneralService {
                                                         String email,
                                                         String removePhoto,
                                                         String password) {
-        ImageUtil imageUtil = new ImageUtil(
+        FileUtil fileUtil = new FileUtil(
                 photo,
-                IMAGE_NAME_LENGTH,
-                true,
-                true,
-                AVATAR_DIR);
+                photoDir,
+                fileNameLength);
         ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
 
-        if (photo.getSize() > MAX_FILE_SIZE) {
+        if (photo.getSize() > maxPhotoSize) {
             log.warn("photo size is over limit");
-            profileErrorResponse.setPhoto("Файл превышает допустимый размер " + MAX_FILE_SIZE + " Мб");
+            profileErrorResponse.setPhoto("Файл превышает допустимый размер " + maxPhotoSize + " Мб");
             throw new ProfileException(profileErrorResponse);
         }
-        if (imageUtil.getFormatName().equals("unknown")) {
+        if (fileUtil.getFormatName().equals("unknown")) {
             log.warn("photo format is unknown");
             profileErrorResponse.setPhoto("Выбран не поддерживаемый тип файла");
             throw new ProfileException(profileErrorResponse);
         }
         try {
-            imageUtil.uploadAvatar();
+            fileUtil.uploadPhoto(photoWidth,photoHeight);
         } catch (IOException ex) {
             log.error("Error photo uploading");
             profileErrorResponse.setPhoto("Ошибка загрузки файла на сервер");
             throw new ProfileException(profileErrorResponse);
         }
         ProfileRequest profileRequest = new ProfileRequest(
-                imageUtil.getImagePath(),
+                fileUtil.getFilePath(),
                 name,
                 email,
                 password,
@@ -286,8 +295,8 @@ public class GeneralService {
         ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
         //Если пароль есть, проверим его длину
         if (password != null && !password.isEmpty()) {
-            if (password.length() < PASSWORD_MIN_LENGTH) {
-                profileErrorResponse.setPassword("Пароль короче 6 символов");
+            if (password.length() < passwordMinLength) {
+                profileErrorResponse.setPassword("Пароль короче " + passwordMinLength + " символов");
                 throw new ProfileException(profileErrorResponse);
             }
         }

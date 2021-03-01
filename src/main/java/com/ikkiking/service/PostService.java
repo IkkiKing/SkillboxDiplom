@@ -31,6 +31,7 @@ import com.ikkiking.repository.GlobalSettingsRepository;
 import com.ikkiking.repository.Votes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -49,8 +50,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PostService {
 
-    private static final int POST_MIN_TEXT_LENGTH = 50;
-    private static final int POST_MIN_TITLE_LENGTH = 3;
+    @Value("${post.title.min.length}")
+    private int postTitleMinLength;
+    @Value("${post.text.min.length}")
+    private int postTextMinLength;
+
     private final PostRepository postRepository;
     private final PostVoteRepository postVoteRepository;
     private final TagRepository tagRepository;
@@ -426,18 +430,18 @@ public class PostService {
     private boolean isCorrectPost(PostRequest postRequest,
                                   PostReturnResponse postPutResponse) {
         boolean isCorrectPost = true;
-        if (postRequest.getTitle().length() < POST_MIN_TITLE_LENGTH
-                || postRequest.getText().length() < POST_MIN_TEXT_LENGTH) {
+        if (postRequest.getTitle().length() < postTitleMinLength
+                || postRequest.getText().length() < postTextMinLength) {
 
             postPutResponse.setResult(false);
 
             String title = null;
             String text = null;
 
-            if (postRequest.getTitle().length() < POST_MIN_TITLE_LENGTH) {
+            if (postRequest.getTitle().length() < postTitleMinLength) {
                 title = "Заголовок не установлен";
             }
-            if (postRequest.getText().length() < POST_MIN_TEXT_LENGTH) {
+            if (postRequest.getText().length() < postTextMinLength) {
                 text = "Текст публикации слишком короткий";
             }
 
