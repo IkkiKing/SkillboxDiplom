@@ -8,11 +8,16 @@ public class DateHelper {
 
     private static final TimeZone TIME_ZONE = TimeZone.getTimeZone("UTC");
 
+    /**
+     * Возвращает объект календарь с устанновленым часовым поясом.
+     * */
     public static Calendar getCurrentDate() {
         return Calendar.getInstance(TIME_ZONE);
     }
 
-    //Получаем правильную дату для поста из таймстампа
+    /**
+     * Формирует дату из переданного timestamp
+     * */
     public static Date getRightDateFromTimeStamp(Long timeStamp) {
 
         Calendar currentTime = Calendar.getInstance(TIME_ZONE);

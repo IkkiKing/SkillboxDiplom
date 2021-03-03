@@ -7,13 +7,15 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+
 @Repository
 public interface CaptchaCodesRepository extends JpaRepository<CaptchaCodes, Long> {
     int countByCodeAndSecretCode(String code, String secretCode);
 
     @Modifying
-    @Query(value = "delete  from captcha_codes cc "
-            + "where cc.time < DATE_SUB(sysdate(),INTERVAL 1 HOUR)",
+    @Query(value = "delete from captcha_codes cc "
+            + "where cc.time < :deleteDate",
             nativeQuery = true)
-    void deleteOldCaptcha(int hours);
+    void deleteOldCaptcha(Date deleteDate);
 }

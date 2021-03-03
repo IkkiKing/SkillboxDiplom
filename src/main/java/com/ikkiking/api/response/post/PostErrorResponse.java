@@ -19,4 +19,13 @@ public class PostErrorResponse {
     public PostErrorResponse(String image) {
         this.image = image;
     }
+
+    @Override
+    public String toString() {
+        return "PostErrorResponse{" +
+                "title='" + title + '\'' +
+                ", text='" + text + '\'' +
+                ", image='" + image + '\'' +
+                '}';
+    }
 }

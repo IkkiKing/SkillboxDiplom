@@ -1,12 +1,13 @@
 package com.ikkiking.base.exception;
 
-import com.ikkiking.api.response.CommentAddResponse;
 import com.ikkiking.api.response.CommentAddError;
+import com.ikkiking.api.response.CommentAddResponse;
 import com.ikkiking.api.response.LoginResponse;
-import com.ikkiking.api.response.RegisterResponse;
 import com.ikkiking.api.response.PasswordResponse;
 import com.ikkiking.api.response.ProfileResponse;
+import com.ikkiking.api.response.RegisterResponse;
 import com.ikkiking.api.response.VoteResponse;
+import com.ikkiking.api.response.post.PostReturnResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -69,6 +71,12 @@ public class BaseControllerAdvice {
     public Object registrationException(PasswordRestoreException ex) {
         log.warn("Unsuccessfull password restore");
         return ResponseEntity.ok(new PasswordResponse(false, ex.getPasswordErrorResponse()));
+    }
+
+    @ExceptionHandler(PostException.class)
+    public Object postException(PostException ex) {
+        log.warn("post is invalid: " + ex.toString());
+        return ResponseEntity.ok(new PostReturnResponse(false, ex.getPostErrorResponse()));
     }
 
     @ExceptionHandler(ProfileException.class)

@@ -9,6 +9,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 public class ContextUser {
 
+    /**
+     * Возвращает email авторизованного пользователя.
+     * */
     public static String getEmailFromContext() {
         String email = null;
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -19,7 +22,9 @@ public class ContextUser {
         return email;
     }
 
-    //Получение юзера из контекста
+    /**
+     * Возвращает авторизованного пользователя.
+     * */
     public static com.ikkiking.model.User getUserFromContext(UserRepository userRepository)
             throws UsernameNotFoundException {
 

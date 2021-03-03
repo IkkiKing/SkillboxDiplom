@@ -4,21 +4,20 @@ import com.ikkiking.api.request.LoginRequest;
 import com.ikkiking.api.request.PasswordRequest;
 import com.ikkiking.api.request.RegisterRequest;
 import com.ikkiking.api.request.RestoreRequest;
+import com.ikkiking.api.response.LoginResponse;
+import com.ikkiking.api.response.PasswordErrorResponse;
+import com.ikkiking.api.response.PasswordResponse;
+import com.ikkiking.api.response.RegisterErrorResponse;
+import com.ikkiking.api.response.RegisterResponse;
+import com.ikkiking.api.response.RestoreResponse;
+import com.ikkiking.api.response.UserLoginResponse;
 import com.ikkiking.api.response.auth.AuthCaptchaResponse;
 import com.ikkiking.api.response.auth.AuthLogoutResponse;
-import com.ikkiking.api.response.LoginResponse;
-import com.ikkiking.api.response.UserLoginResponse;
-import com.ikkiking.api.response.RegisterResponse;
-import com.ikkiking.api.response.RegisterErrorResponse;
-import com.ikkiking.api.response.RestoreResponse;
-import com.ikkiking.api.response.PasswordResponse;
-import com.ikkiking.api.response.PasswordErrorResponse;
 import com.ikkiking.base.CaptchaUtil;
 import com.ikkiking.base.DateHelper;
-import com.ikkiking.base.MailUtil;
+import com.ikkiking.base.exception.PasswordRestoreException;
 import com.ikkiking.base.exception.RegistrationClosedException;
 import com.ikkiking.base.exception.RegistrationException;
-import com.ikkiking.base.exception.PasswordRestoreException;
 import com.ikkiking.config.SecurityConfig;
 import com.ikkiking.model.CaptchaCodes;
 import com.ikkiking.repository.CaptchaCodesRepository;
@@ -30,7 +29,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -39,7 +37,9 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.security.Principal;
+import java.util.Calendar;
 import java.util.Optional;
 
 @Service
@@ -67,16 +67,12 @@ public class AuthService {
     @Value("${captcha.secretCode.length}")
     private int captchaSecretCodeLength;
 
-    @Value("${spring.mail.email}")
-    private String emailFromRestore;
-
-
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final GlobalSettingsRepository globalSettingsRepository;
     private final CaptchaCodesRepository captchaCodesRepository;
-    private final JavaMailSender emailSender;
+    private final MailService mailService;
 
     @Autowired
     public AuthService(AuthenticationManager authenticationManager,
@@ -84,13 +80,13 @@ public class AuthService {
                        PostRepository postRepository,
                        GlobalSettingsRepository globalSettingsRepository,
                        CaptchaCodesRepository captchaCodesRepository,
-                       JavaMailSender emailSender) {
+                       MailService mailService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.globalSettingsRepository = globalSettingsRepository;
         this.captchaCodesRepository = captchaCodesRepository;
-        this.emailSender = emailSender;
+        this.mailService = mailService;
     }
 
     /**
@@ -164,12 +160,21 @@ public class AuthService {
         captchaCodes.setCode(code);
         captchaCodes.setSecretCode(secretCode);
         captchaCodes.setTime(DateHelper.getCurrentDate().getTime());
-        //Удаляем устаревшие капчи
-        captchaCodesRepository.deleteOldCaptcha(captchaDeleteHours);
+        deleteOldCaptcha();
         //Сохраняем новую
         captchaCodesRepository.save(captchaCodes);
         log.info("Captcha code is: " + code + ". Secret code is: " + secretCode);
         return ResponseEntity.ok(authCaptchaResponse);
+    }
+
+    /**
+     * Метод удаления старой капчи
+     * */
+    private void deleteOldCaptcha(){
+        Calendar calendar = DateHelper.getCurrentDate();
+        calendar.add(Calendar.HOUR, -captchaDeleteHours);
+        //Удаляем устаревшие капчи
+        captchaCodesRepository.deleteOldCaptcha(calendar.getTime());
     }
 
     /**
@@ -256,17 +261,14 @@ public class AuthService {
             String userCode = RandomStringUtils.random(passwordRestoreCodeLength, true, true);
             user.setCode(userCode);
             userRepository.save(user);
-            restoreResponse.setResult(true);
-            MailUtil.sendMail(emailSender,
-                    emailFromRestore,
-                    restoreRequest.getEmail(),
+            mailService.send(restoreRequest.getEmail(),
                     "Восстановление пароля DevPub",
                     "Для восстановления вашего пароля, пройдите по ссылке "
                             + "http://localhost:8080/login/change-password/" + userCode);
-
         } else {
             log.warn("User not found. Email wasnt sended.");
         }
+        restoreResponse.setResult(true);
         return ResponseEntity.ok(restoreResponse);
     }
 
@@ -275,7 +277,6 @@ public class AuthService {
      * */
     @Transactional
     public ResponseEntity<PasswordResponse> password(PasswordRequest passwordRequest) {
-        PasswordResponse passwordResponse = new PasswordResponse();
 
         validateRestorePasswordRequest(passwordRequest);
 
@@ -295,6 +296,8 @@ public class AuthService {
                     + "<a href =\"/auth/restore\">Запросить ссылку снова</a>");
             throw new PasswordRestoreException(passwordErrorResponse);
         }
+        PasswordResponse passwordResponse = new PasswordResponse();
+        passwordResponse.setResult(true);
         return ResponseEntity.ok(passwordResponse);
     }
 

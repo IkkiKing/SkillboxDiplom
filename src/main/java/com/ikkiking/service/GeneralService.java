@@ -264,11 +264,12 @@ public class GeneralService {
 
         String email = profileRequest.getEmail();
         String password = profileRequest.getPassword();
+        String name = profileRequest.getName();
         User user = ContextUser.getUserFromContext(userRepository);
 
-        validateCredentials(user, email, password);
+        validateCredentials(user, name, email, password);
 
-        user.setName(profileRequest.getName());
+        user.setName(name);
         user.setEmail(email);
         if (profileRequest.getRemovePhoto() != null) {
             if (profileRequest.getRemovePhoto() == 1) {
@@ -289,10 +290,16 @@ public class GeneralService {
      * Валидация данных пользователя.
      * */
     private void validateCredentials(User user,
+                                     String name,
                                      String email,
                                      String password) {
 
         ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
+        //Если пароль есть, проверим его длину
+        if (name == null || name.isEmpty()) {
+            profileErrorResponse.setName("Имя указано неверно");
+            throw new ProfileException(profileErrorResponse);
+        }
         //Если пароль есть, проверим его длину
         if (password != null && !password.isEmpty()) {
             if (password.length() < passwordMinLength) {

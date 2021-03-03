@@ -11,18 +11,15 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: DeveloperSmelovEA
+    host: smtp.yandex.ru
+    port: 465
+    username: DeveloperSmelovEA@yandex.ru
     password: DevelopSomething
-    email: DeveloperSmelovEA@gmail.com
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
+    protocol: smtps
+
+mail:
+  email: DeveloperSmelovEA@yandex.ru
+  debug: true
 
 blog:
   title: DevPub

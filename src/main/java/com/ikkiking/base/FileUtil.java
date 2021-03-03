@@ -32,18 +32,25 @@ public class FileUtil {
         getImageFileExtension();
     }
 
+    /**
+     * Определяет тип изображения MultiPartFile
+     * */
     private String getImageFileExtension() {
         formatName = "unknown";
         if (multipartFile.getContentType().equals("image/jpeg")) {
             formatName = "jpg";
         }
-
         if (multipartFile.getContentType().equals("image/png")) {
             formatName = "png";
         }
         return formatName;
     }
-
+    /**
+     * Метод формирования директорий для хранения изображений.
+     *
+     * @param imageFilePath Путь для сохранения изображения
+     * @param randomString Строка из которой формируются названия директорий
+     * */
     private String createRandomDirs(String imageFilePath, String randomString) {
         int i = 0;
 
@@ -62,9 +69,14 @@ public class FileUtil {
         return builder.toString();
     }
 
+    /**
+     * Сохранение изображения на сервер.
+     *
+     * @param uploadDir директория для сохранения
+     * @param fileName имя файла
+     * */
     private void saveFile(String uploadDir,
-                          String fileName,
-                          MultipartFile multipartFile) throws IOException {
+                          String fileName) throws IOException {
         Path uploadPath = Paths.get(uploadDir);
 
         if (!Files.exists(uploadPath)) {
@@ -74,6 +86,10 @@ public class FileUtil {
         Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
     }
 
+
+    /**
+     * Загрузка изображения на сервер.
+     * */
     public void uploadImage() throws IOException {
 
         String randomString = RandomStringUtils.random(nameLength, true, false);
@@ -84,14 +100,20 @@ public class FileUtil {
 
         filePath = new File(filePath + "/" + fileName).getAbsolutePath();
 
-        saveFile(filePath, fileName, multipartFile);
+        saveFile(filePath, fileName);
     }
 
+    /**
+     * Загрузка фото на сервер в сжатом объеме.
+     *
+     * @param width ширина для сжатия
+     * @param height высота для сжатия
+     * */
     public void uploadPhoto(final int width,
-                            final int length) throws IOException {
+                            final int height) throws IOException {
 
         BufferedImage bufferedImage = ImageIO.read(multipartFile.getInputStream());
-        bufferedImage = Scalr.resize(bufferedImage, width, length);
+        bufferedImage = Scalr.resize(bufferedImage, width, height);
 
         String randomString = RandomStringUtils.random(nameLength, true, false);
 

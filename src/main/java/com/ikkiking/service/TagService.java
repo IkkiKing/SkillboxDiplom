@@ -12,8 +12,7 @@ import java.util.stream.Collectors;
 @Service
 public class TagService {
 
-
-    private TagRepository tagRepository;
+    private final TagRepository tagRepository;
 
     @Autowired
     public TagService(TagRepository tagRepository) {
@@ -22,6 +21,9 @@ public class TagService {
 
     /**
      * Возвращает список тэгов блога.
+     *
+     * @param query строка с заданным тэгом
+     * @return список найденных в БД тэгов
      * */
     public ResponseEntity<TagResponse> tag(String query) {
         List<Tag> tagList = tagRepository.findAllByTags(query).stream()

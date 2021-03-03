@@ -2,32 +2,32 @@ package com.ikkiking.service;
 
 import com.ikkiking.api.request.PostRequest;
 import com.ikkiking.api.request.VoteRequest;
-import com.ikkiking.api.response.post.PostForResponse;
-import com.ikkiking.api.response.post.PostResponse;
-import com.ikkiking.api.response.post.UserResponse;
-import com.ikkiking.api.response.post.PostByIdResponse;
+import com.ikkiking.api.response.VoteResponse;
 import com.ikkiking.api.response.post.CommentResponse;
 import com.ikkiking.api.response.post.CommentUserResponse;
-import com.ikkiking.api.response.post.PostReturnResponse;
+import com.ikkiking.api.response.post.PostByIdResponse;
 import com.ikkiking.api.response.post.PostErrorResponse;
-import com.ikkiking.api.response.VoteResponse;
+import com.ikkiking.api.response.post.PostForResponse;
+import com.ikkiking.api.response.post.PostResponse;
+import com.ikkiking.api.response.post.PostReturnResponse;
+import com.ikkiking.api.response.post.UserResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.DateHelper;
+import com.ikkiking.base.exception.PostException;
 import com.ikkiking.base.exception.PostNotFoundException;
 import com.ikkiking.base.exception.VoteException;
-import com.ikkiking.model.Post;
-import com.ikkiking.model.User;
 import com.ikkiking.model.ModerationStatus;
+import com.ikkiking.model.Post;
+import com.ikkiking.model.PostVote;
 import com.ikkiking.model.Tag;
 import com.ikkiking.model.Tag2Post;
-import com.ikkiking.model.PostVote;
+import com.ikkiking.model.User;
+import com.ikkiking.repository.GlobalSettingsRepository;
 import com.ikkiking.repository.PostRepository;
 import com.ikkiking.repository.PostVoteRepository;
-import com.ikkiking.repository.PostCommentsRepository;
-import com.ikkiking.repository.TagRepository;
 import com.ikkiking.repository.Tag2PostRepository;
+import com.ikkiking.repository.TagRepository;
 import com.ikkiking.repository.UserRepository;
-import com.ikkiking.repository.GlobalSettingsRepository;
 import com.ikkiking.repository.Votes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +42,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -395,61 +395,75 @@ public class PostService {
     public ResponseEntity<PostReturnResponse> addPost(PostRequest postRequest) {
         PostReturnResponse postPutResponse = new PostReturnResponse();
         //Проверяем пост
-        if (isCorrectPost(postRequest, postPutResponse)) {
-            //Ищем юзера в контексте
-            User user = ContextUser.getUserFromContext(userRepository);
+        validatePost(postRequest);
+        //Ищем юзера в контексте
+        User user = ContextUser.getUserFromContext(userRepository);
 
-            Post post = new Post();
-            post.setActive(postRequest.getActive() == 1);
+        Post post = new Post();
+        post.setActive(postRequest.getActive() == 1);
+        post.setModerationStatus(ModerationStatus.NEW);
+
+        //Если юзер является модератором или предмодерация отключена, пост сразу становится принят
+        if (!SettingsService.getSettingsValue(globalSettingsRepository, "POST_PREMODERATION")
+                || user.isModerator()) {
+            post.setModerationStatus(ModerationStatus.ACCEPTED);
+        } else {
             post.setModerationStatus(ModerationStatus.NEW);
-
-            //Если юзер является модератором или предмодерация отключена, пост сразу становится принят
-            if (!SettingsService.getSettingsValue(globalSettingsRepository, "POST_PREMODERATION")
-                    || user.isModerator()) {
-                post.setModerationStatus(ModerationStatus.ACCEPTED);
-            } else {
-                post.setModerationStatus(ModerationStatus.NEW);
-            }
-
-            post.setUser(user);
-            post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
-            post.setTitle(postRequest.getTitle());
-            post.setText(postRequest.getText());
-            post.setViewCount(0L);
-
-            Post newPost = postRepository.save(post);
-            setTagsToPost(postRequest.getTags(), newPost.getId());
-            postPutResponse.setResult(true);
         }
+        post.setUser(user);
+        post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
+        post.setTitle(postRequest.getTitle());
+        post.setText(postRequest.getText());
+        post.setViewCount(0L);
+
+        Post newPost = postRepository.save(post);
+        setTagsToPost(postRequest.getTags(), newPost.getId());
+        postPutResponse.setResult(true);
+
+        return ResponseEntity.ok(postPutResponse);
+    }
+
+    /**
+     * Метод редактирования поста.
+     */
+    @Transactional
+    public ResponseEntity<PostReturnResponse> editPost(long postId, PostRequest postRequest) {
+        PostReturnResponse postPutResponse = new PostReturnResponse();
+        //Проверяем пост
+        validatePost(postRequest);
+        Post post = postRepository.findById(postId).get();
+        User currentUser = ContextUser.getUserFromContext(userRepository);
+
+        //Если пост сохраняет автор и он не является модератором, присваиваем статус NEW
+        if (post.getUser().getId() == currentUser.getId() && !currentUser.isModerator()) {
+            post.setModerationStatus(ModerationStatus.NEW);
+        }
+        post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
+        post.setActive(postRequest.getActive() == 1);
+        post.setTitle(postRequest.getTitle());
+        post.setText(postRequest.getText());
+        postRepository.save(post);
+
+        setTagsToPost(postRequest.getTags(), postId);
+        postPutResponse.setResult(true);
+
         return ResponseEntity.ok(postPutResponse);
     }
 
     /**
      * Вспомогательный метод, проверяет корректность поста перед сохранением.
      */
-    private boolean isCorrectPost(PostRequest postRequest,
-                                  PostReturnResponse postPutResponse) {
-        boolean isCorrectPost = true;
-        if (postRequest.getTitle().length() < postTitleMinLength
-                || postRequest.getText().length() < postTextMinLength) {
-
-            postPutResponse.setResult(false);
-
-            String title = null;
-            String text = null;
-
-            if (postRequest.getTitle().length() < postTitleMinLength) {
-                title = "Заголовок не установлен";
-            }
-            if (postRequest.getText().length() < postTextMinLength) {
-                text = "Текст публикации слишком короткий";
-            }
-
-            postPutResponse.setErrors(new PostErrorResponse(title, text));
-            isCorrectPost = false;
-            log.warn("Post is not correct");
+    private void validatePost(PostRequest postRequest) {
+        if (postRequest.getTitle().length() < postTitleMinLength) {
+            PostErrorResponse postErrorResponse = new PostErrorResponse();
+            postErrorResponse.setTitle("Заголовок не установлен");
+            throw new PostException(postErrorResponse);
         }
-        return isCorrectPost;
+        if (postRequest.getText().length() < postTextMinLength) {
+            PostErrorResponse postErrorResponse = new PostErrorResponse();
+            postErrorResponse.setText("Текст публикации слишком короткий");
+            throw new PostException(postErrorResponse);
+        }
     }
 
     /**
@@ -457,7 +471,6 @@ public class PostService {
      */
     private void setTagsToPost(List<String> tags,
                                Long postId) {
-
         if (tags != null) {
             //Список добавляемых к посту тэгов
             List<Tag> tagList = tagRepository.findAllByNameIn(tags);
@@ -472,33 +485,6 @@ public class PostService {
             ).collect(Collectors.toList());
             tag2PostRepository.saveAll(tag2PostList);
         }
-    }
-
-    /**
-     * Метод редактирования поста.
-     */
-    @Transactional
-    public ResponseEntity<PostReturnResponse> editPost(long postId, PostRequest postRequest) {
-        PostReturnResponse postPutResponse = new PostReturnResponse();
-        //Проверяем пост
-        if (isCorrectPost(postRequest, postPutResponse)) {
-            Post post = postRepository.findById(postId).get();
-            User currentUser = ContextUser.getUserFromContext(userRepository);
-
-            //Если пост сохраняет автор и он не является модератором, присваиваем статус NEW
-            if (post.getUser().getId() == currentUser.getId() && !currentUser.isModerator()) {
-                post.setModerationStatus(ModerationStatus.NEW);
-            }
-            post.setTime(DateHelper.getRightDateFromTimeStamp(postRequest.getTimestamp()));
-            post.setActive(postRequest.getActive() == 1);
-            post.setTitle(postRequest.getTitle());
-            post.setText(postRequest.getText());
-            postRepository.save(post);
-
-            setTagsToPost(postRequest.getTags(), postId);
-            postPutResponse.setResult(true);
-        }
-        return ResponseEntity.ok(postPutResponse);
     }
 
     /**
@@ -538,7 +524,6 @@ public class PostService {
             postVote.setUser(user);
             postVote.setPost(post);
         }
-
         postVote.setTime(DateHelper.getCurrentDate().getTime());
         postVote.setValue(value);
         postVoteRepository.save(postVote);

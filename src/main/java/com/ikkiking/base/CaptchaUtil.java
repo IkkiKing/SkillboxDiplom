@@ -28,13 +28,13 @@ public class CaptchaUtil {
         this.captchaWidth = captchaWidth;
         this.captchaHeight = captchaHeight;
         this.secretCodeLength = secretCodeLength;
-        setupCaptchaUtil();
+        setupCaptcha();
     }
 
     /**
-     * Возвращает объект для формирования капчи.
+     * Формирует строку base64 для отображения капчи.
      * */
-    private void setupCaptchaUtil() {
+    private void setupCaptcha() {
         IGenerator<String> generator = () -> RandomStringUtils.random(captchaLength, true, true);
         Painter painter = new Painter(
                 captchaWidth,

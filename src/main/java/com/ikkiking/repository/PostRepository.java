@@ -83,7 +83,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             + "       sum((select count(pv.id)"
             + "        from post_votes pv"
             + "        where pv.post_id = p.id"
-            + "          and pv.value = 0)) as dislikesCount,"
+            + "          and pv.value = -1)) as dislikesCount,"
             + "       sum(p.view_count) as viewsCount,"
             + "       min(p.time) as firstPublication"
             + "  from posts p"
@@ -102,7 +102,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             + "       sum((select count(pv.id)"
             + "        from post_votes pv"
             + "        where pv.post_id = p.id"
-            + "          and pv.value = 0)) as dislikesCount,"
+            + "          and pv.value = -1)) as dislikesCount,"
             + "       sum(p.view_count) as viewsCount,"
             + "       min(p.time) as firstPublication"
             + "  from posts p",
