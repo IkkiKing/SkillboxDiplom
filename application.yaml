@@ -49,9 +49,9 @@ file:
   name:
     length : 20
   image:
-    dir: src/main/resources/upload
+    dir: /images
   photo:
-    dir: src/main/resources/upload/avatar
+    dir: /images
     size: 5_000_000
     width: 36
     height: 36

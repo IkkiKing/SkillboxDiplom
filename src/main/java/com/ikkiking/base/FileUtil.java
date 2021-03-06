@@ -33,7 +33,7 @@ public class FileUtil {
     }
 
     /**
-     * Определяет тип изображения MultiPartFile
+     * Определяет тип изображения MultiPartFile.
      * */
     private String getImageFileExtension() {
         formatName = "unknown";
@@ -45,6 +45,7 @@ public class FileUtil {
         }
         return formatName;
     }
+
     /**
      * Метод формирования директорий для хранения изображений.
      *
@@ -72,18 +73,21 @@ public class FileUtil {
     /**
      * Сохранение изображения на сервер.
      *
-     * @param uploadDir директория для сохранения
+     * @param folderName директория для сохранения
      * @param fileName имя файла
+     * @return относительное имя файла
+     *
      * */
-    private void saveFile(String uploadDir,
-                          String fileName) throws IOException {
-        Path uploadPath = Paths.get(uploadDir);
+    private String saveFile(String folderName,
+                            String fileName) throws IOException {
+        Path folderPath = Paths.get(folderName);
 
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
+        if (!Files.exists(folderPath)) {
+            Files.createDirectories(folderPath);
         }
-        Path filePath = uploadPath.resolve(fileName);
-        Files.copy(multipartFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        Path imagePath = folderPath.resolve(fileName);
+        Files.copy(multipartFile.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
+        return toLinkPath(imagePath.toString());
     }
 
 
@@ -94,13 +98,11 @@ public class FileUtil {
 
         String randomString = RandomStringUtils.random(nameLength, true, false);
 
-        String filePath = createRandomDirs(fileDir, randomString);
+        String folderName = createRandomDirs(fileDir, randomString);
 
         String fileName = randomString.substring(8) + "." + formatName;
 
-        filePath = new File(filePath + "/" + fileName).getAbsolutePath();
-
-        saveFile(filePath, fileName);
+        filePath = saveFile(folderName, fileName);
     }
 
     /**
@@ -124,6 +126,10 @@ public class FileUtil {
         }
 
         ImageIO.write(bufferedImage, formatName, file);
-        filePath = file.getAbsolutePath();
+        filePath = toLinkPath(file.getPath());
+    }
+
+    private String toLinkPath(String path) {
+        return path.substring(path.indexOf("\\images")).replace("\\", "/");
     }
 }

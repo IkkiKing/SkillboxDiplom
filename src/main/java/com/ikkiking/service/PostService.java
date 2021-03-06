@@ -393,7 +393,6 @@ public class PostService {
      */
     @Transactional
     public ResponseEntity<PostReturnResponse> addPost(PostRequest postRequest) {
-        PostReturnResponse postPutResponse = new PostReturnResponse();
         //Проверяем пост
         validatePost(postRequest);
         //Ищем юзера в контексте
@@ -418,9 +417,8 @@ public class PostService {
 
         Post newPost = postRepository.save(post);
         setTagsToPost(postRequest.getTags(), newPost.getId());
-        postPutResponse.setResult(true);
 
-        return ResponseEntity.ok(postPutResponse);
+        return ResponseEntity.ok(new PostReturnResponse(true));
     }
 
     /**
@@ -428,7 +426,6 @@ public class PostService {
      */
     @Transactional
     public ResponseEntity<PostReturnResponse> editPost(long postId, PostRequest postRequest) {
-        PostReturnResponse postPutResponse = new PostReturnResponse();
         //Проверяем пост
         validatePost(postRequest);
         Post post = postRepository.findById(postId).get();
@@ -445,9 +442,7 @@ public class PostService {
         postRepository.save(post);
 
         setTagsToPost(postRequest.getTags(), postId);
-        postPutResponse.setResult(true);
-
-        return ResponseEntity.ok(postPutResponse);
+        return ResponseEntity.ok(new PostReturnResponse(true));
     }
 
     /**

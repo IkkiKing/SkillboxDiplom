@@ -16,7 +16,7 @@ public class DateHelper {
     }
 
     /**
-     * Формирует дату из переданного timestamp
+     * Формирует дату из переданного timestamp.
      * */
     public static Date getRightDateFromTimeStamp(Long timeStamp) {
 

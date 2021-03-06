@@ -37,7 +37,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.security.Principal;
 import java.util.Calendar;
 import java.util.Optional;
@@ -168,9 +167,9 @@ public class AuthService {
     }
 
     /**
-     * Метод удаления старой капчи
+     * Метод удаления старой капчи.
      * */
-    private void deleteOldCaptcha(){
+    private void deleteOldCaptcha() {
         Calendar calendar = DateHelper.getCurrentDate();
         calendar.add(Calendar.HOUR, -captchaDeleteHours);
         //Удаляем устаревшие капчи

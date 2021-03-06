@@ -1,6 +1,5 @@
 package com.ikkiking.model;
 
-
 import lombok.Data;
 import javax.persistence.Entity;
 import javax.persistence.Id;

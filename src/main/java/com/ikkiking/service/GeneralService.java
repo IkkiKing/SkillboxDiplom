@@ -184,13 +184,11 @@ public class GeneralService {
 
         try {
             fileUtil.uploadImage();
-            imageResponse.setResult(true);
         } catch (IOException ex) {
             log.error("Error file uploading");
             imageResponse.setErrors(new ImageErrorResponse("Ошибка загрузки файла на сервер"));
             throw new ImageUploadException(imageResponse);
         }
-
         return ResponseEntity.ok(fileUtil.getFilePath());
     }
 
@@ -225,7 +223,7 @@ public class GeneralService {
             throw new ProfileException(profileErrorResponse);
         }
         try {
-            fileUtil.uploadPhoto(photoWidth,photoHeight);
+            fileUtil.uploadPhoto(photoWidth, photoHeight);
         } catch (IOException ex) {
             log.error("Error photo uploading");
             profileErrorResponse.setPhoto("Ошибка загрузки файла на сервер");

@@ -22,10 +22,10 @@ public class PostErrorResponse {
 
     @Override
     public String toString() {
-        return "PostErrorResponse{" +
-                "title='" + title + '\'' +
-                ", text='" + text + '\'' +
-                ", image='" + image + '\'' +
-                '}';
+        return "PostErrorResponse{"
+                + "title='" + title + '\''
+                + ", text='" + text + '\''
+                + ", image='" + image + '\''
+                + '}';
     }
 }
