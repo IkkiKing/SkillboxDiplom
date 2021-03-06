@@ -40,12 +40,6 @@ public class GeneralService {
     @Value("${file.name.length}")
     private int fileNameLength;
 
-    @Value("${file.image.dir}")
-    private String imageDir;
-
-    @Value("${file.photo.dir}")
-    private String photoDir;
-
     @Value("${file.photo.size}")
     private long maxPhotoSize;
 
@@ -174,7 +168,6 @@ public class GeneralService {
         ImageResponse imageResponse = new ImageResponse();
         FileUtil fileUtil = new FileUtil(
                 multipartFile,
-                imageDir,
                 fileNameLength);
         if (fileUtil.getFormatName().equals("unknown")) {
             log.error("Unknown image format file");
@@ -208,7 +201,6 @@ public class GeneralService {
                                                         String password) {
         FileUtil fileUtil = new FileUtil(
                 photo,
-                photoDir,
                 fileNameLength);
         ProfileErrorResponse profileErrorResponse = new ProfileErrorResponse();
 

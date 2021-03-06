@@ -16,18 +16,16 @@ import java.nio.file.StandardCopyOption;
 @Data
 public class FileUtil {
 
+    private static final String FILE_DIR = System.getProperty("user.dir") + "/uploads";
     private final MultipartFile multipartFile;
-    private final String fileDir;
     private final int nameLength;
 
     private String formatName;
     private String filePath;
 
     public FileUtil(MultipartFile multipartFile,
-                    String fileDir,
                     int nameLength) {
         this.multipartFile = multipartFile;
-        this.fileDir = fileDir;
         this.nameLength = nameLength;
         getImageFileExtension();
     }
@@ -98,7 +96,7 @@ public class FileUtil {
 
         String randomString = RandomStringUtils.random(nameLength, true, false);
 
-        String folderName = createRandomDirs(fileDir, randomString);
+        String folderName = createRandomDirs(FILE_DIR, randomString);
 
         String fileName = randomString.substring(8) + "." + formatName;
 
@@ -119,7 +117,7 @@ public class FileUtil {
 
         String randomString = RandomStringUtils.random(nameLength, true, false);
 
-        File file = new File(fileDir + "/" + randomString + "." + formatName);
+        File file = new File(FILE_DIR + "/" + randomString + "." + formatName);
 
         if (!file.exists()) {
             file.mkdirs();
@@ -130,6 +128,6 @@ public class FileUtil {
     }
 
     private String toLinkPath(String path) {
-        return path.substring(path.indexOf("\\images")).replace("\\", "/");
+        return path.substring(path.indexOf("\\uploads")).replace("\\", "/");
     }
 }
