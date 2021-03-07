@@ -1,8 +1,15 @@
 package com.ikkiking.model;
 
 import lombok.Data;
-
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.CascadeType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Column;
+import javax.persistence.FetchType;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
@@ -19,7 +26,7 @@ public class PostComments {
 
     @NotNull(message = "post_comments.post_id may not be null")
     @JoinColumn(name = "post_id")
-    @ManyToOne(optional = false, cascade = CascadeType.ALL)
+    @ManyToOne(optional = false, cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Post post;
 
     @NotNull(message = "post_comments.user_id may not be null")

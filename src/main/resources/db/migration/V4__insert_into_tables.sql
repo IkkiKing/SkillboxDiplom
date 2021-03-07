@@ -21,50 +21,50 @@ insert into users(id, is_moderator, reg_time, name, email, password, code, photo
 values (7, 1, '2017-12-18 13:12:00', 'Скиллбоксов Программ', 'Skillboxer2020@gmail.com', 'asdasth4rt', 'code_number_7', null);
 
 delete from posts;
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(1,  1, 'ACCEPTED', 1, 1, '2014-09-01 13:12:00', 'Приветствие', 'Приветсвуем всех на нашем форуме посвященному курсу Java разработчик с 0!', 5, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(1,  1, 'ACCEPTED', 1, 1, '2014-09-01 13:12:00', 'Приветствие', 'Приветсвуем всех на нашем форуме посвященному курсу Java разработчик с 0!', 5);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(2,  1, 'NEW', 1, 2, '2014-11-02 12:15:17', 'Черная пятница', 'Скоро черная пятница, а значит все курсы обучения будут доступны по скидкам', 1, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(2,  1, 'NEW', 1, 2, '2014-11-02 12:15:17', 'Черная пятница', 'Скоро черная пятница, а значит все курсы обучения будут доступны по скидкам', 1);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(3,  1, 'NEW', 1, 5, '2015-12-03 11:15:17', 'Какой курс выбрать?', 'Среди курсорв Skillbox каждый найдет себе что-то по душе. Есть курсы по направлениям: Программирование, Веб-дизайн, Маркетинг, Управление, Игры', 1, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(3,  1, 'NEW', 1, 5, '2015-12-03 11:15:17', 'Какой курс выбрать?', 'Среди курсорв Skillbox каждый найдет себе что-то по душе. Есть курсы по направлениям: Программирование, Веб-дизайн, Маркетинг, Управление, Игры', 1);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(4,  1, 'DECLINED', 1, 3, '2016-05-05 12:13:17', 'Приветствие', 'Приветсвуем всех на нашем форуме посвященному курсу Java разработчик с 0!', 0, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(4,  1, 'DECLINED', 1, 3, '2016-05-05 12:13:17', 'Приветствие', 'Приветсвуем всех на нашем форуме посвященному курсу Java разработчик с 0!', 0);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(5,  1, 'ACCEPTED', 1, 1, '2016-06-11 13:12:17', 'Веб-дизайн', 'Вы узнаете принципы композиции в дизайне сайтов, научитесь работать с типографикой, 3D и анимацией, сможете создавать не только красивые, но и удобные для пользователей сайты.', 2, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(5,  1, 'ACCEPTED', 1, 1, '2016-06-11 13:12:17', 'Веб-дизайн', 'Вы узнаете принципы композиции в дизайне сайтов, научитесь работать с типографикой, 3D и анимацией, сможете создавать не только красивые, но и удобные для пользователей сайты.', 2);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(6,  1, 'ACCEPTED', 1, 1, '2017-04-22 14:11:17', 'Профессия Python-разработчик', 'На практике научитесь писать программы и разрабатывать веб-приложения с индивидуальной помощью от наставника. За 12 месяцев станете востребованным разработчиком, даже если вы новичок в программировании.', 3, 'https://248006.selcdn.ru/LandGen/desktop_4589beaf332198133164e04e0fb855c2c1368858.webp');
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(6,  1, 'ACCEPTED', 1, 1, '2017-04-22 14:11:17', 'Профессия Python-разработчик', 'На практике научитесь писать программы и разрабатывать веб-приложения с индивидуальной помощью от наставника. За 12 месяцев станете востребованным разработчиком, даже если вы новичок в программировании.', 3);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(7,  1, 'ACCEPTED', 7, 1, '2018-05-23 15:59:17', 'Графический дизайн', 'Вы узнаете, как создавать фирменный стиль, крутые логотипы, дизайн для полиграфии и веба. Научитесь уверенно работать в Illustrator и Photoshop — и добавите мощный проект в портфолио. Сможете брать первые заказы и зарабатывать уже через 4 месяца.', 4, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(7,  1, 'ACCEPTED', 7, 1, '2018-05-23 15:59:17', 'Графический дизайн', 'Вы узнаете, как создавать фирменный стиль, крутые логотипы, дизайн для полиграфии и веба. Научитесь уверенно работать в Illustrator и Photoshop — и добавите мощный проект в портфолио. Сможете брать первые заказы и зарабатывать уже через 4 месяца.', 4);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(8,  1, 'ACCEPTED', 7, 1, '2018-06-24 16:58:17', 'Дизайн жилых и коммерческих интерьеров', 'Вы научитесь создавать уникальные жилые и коммерческие интерьеры, а также продвигать свои услуги. Сможете стать более универсальным и востребованным специалистом или управлять собственной дизайн-студией.', 5, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(8,  1, 'ACCEPTED', 7, 1, '2018-06-24 16:58:17', 'Дизайн жилых и коммерческих интерьеров', 'Вы научитесь создавать уникальные жилые и коммерческие интерьеры, а также продвигать свои услуги. Сможете стать более универсальным и востребованным специалистом или управлять собственной дизайн-студией.', 5);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(9,  1, 'ACCEPTED', 7, 7, '2018-07-30 17:57:17', 'Дизайнер интерьеров', 'Вы научитесь создавать стильные интерьеры, делать удобные планировки и 3D-визуализации. Сможете получить востребованную профессию, выйти на новый уровень или построить дом мечты для себя.!', 6, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(9,  1, 'ACCEPTED', 7, 7, '2018-07-30 17:57:17', 'Дизайнер интерьеров', 'Вы научитесь создавать стильные интерьеры, делать удобные планировки и 3D-визуализации. Сможете получить востребованную профессию, выйти на новый уровень или построить дом мечты для себя.!', 6);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(10,  1, 'ACCEPTED', 1, 1, '2019-08-07 18:56:17', 'Профессия Интернет-маркетолог', 'Освойте полный комплекс услуг по интернет-продвижению и станьте профессиональным маркетологом, стратегом, аналитиком, контекстологом и таргетологом в одном лице.', 1, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(10,  1, 'ACCEPTED', 1, 1, '2019-08-07 18:56:17', 'Профессия Интернет-маркетолог', 'Освойте полный комплекс услуг по интернет-продвижению и станьте профессиональным маркетологом, стратегом, аналитиком, контекстологом и таргетологом в одном лице.', 1);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(11,  1, 'ACCEPTED', 1, 1, '2019-09-08 19:55:17', 'UX-дизайн', 'Вы научитесь создавать крутой дизайн, разрабатывать удобные интерфейсы — и станете востребованным специалистом в UX.', 5, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(11,  1, 'ACCEPTED', 1, 1, '2019-09-08 19:55:17', 'UX-дизайн', 'Вы научитесь создавать крутой дизайн, разрабатывать удобные интерфейсы — и станете востребованным специалистом в UX.', 5);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(12,  1, 'ACCEPTED', 1, 1, '2019-10-09 20:44:17', 'Профессия 3D-дженералист', 'Вы станете универсальным специалистом, который умеет в 3D всё: создавать объекты и окружение, настраивать текстуры и цвет, анимировать и внедрять модели в 3D-сцену. Освоите Houdini, Autodesk Maya, Photoshop, ZBrush и Marmoset Toolbag и сможете претендовать на работу в рекламе, играх или кино.!', 4, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(12,  1, 'ACCEPTED', 1, 1, '2019-10-09 20:44:17', 'Профессия 3D-дженералист', 'Вы станете универсальным специалистом, который умеет в 3D всё: создавать объекты и окружение, настраивать текстуры и цвет, анимировать и внедрять модели в 3D-сцену!', 4);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(13,  1, 'ACCEPTED', 1, 1, '2019-11-10 21:33:17', 'Профессия Ландшафтный дизайнер', 'Вы научитесь проектировать участки, сады и парки, создавать эскизы, чертежи и ландшафтные проекты в 3D — и точно попадать в желания заказчика. Соберёте портфолио и сможете работать в дизайн-студии или на фрилансе.', 3, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(13,  1, 'ACCEPTED', 1, 1, '2019-11-10 21:33:17', 'Профессия Ландшафтный дизайнер', 'Вы научитесь проектировать участки, сады и парки, создавать эскизы, чертежи и ландшафтные проекты в 3D — и точно попадать в желания заказчика. Соберёте портфолио и сможете работать в дизайн-студии или на фрилансе.', 3);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(14,  1, 'ACCEPTED', 1, 7, '2020-12-11 22:22:17', 'Профессия Бизнес-аналитик', 'Вы освоите системный и бизнес-анализ, научитесь строить бизнес-модели, чтобы помогать компаниям принимать стратегические решения и увеличивать прибыль. Сможете стать высокооплачиваемым специалистом.', 7, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(14,  1, 'ACCEPTED', 1, 7, '2020-12-11 22:22:17', 'Профессия Бизнес-аналитик', 'Вы освоите системный и бизнес-анализ, научитесь строить бизнес-модели, чтобы помогать компаниям принимать стратегические решения и увеличивать прибыль. Сможете стать высокооплачиваемым специалистом.', 7);
 
-insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count, photo)
-VALUES(15,  1, 'ACCEPTED', 1, 7, '2020-12-16 23:11:17', 'Профессия‌ ‌Data‌ ‌Scientist‌', 'Вы станете специалистом по анализу данных, алгоритмам машинного обучения и нейросетям, сможете построить карьеру в крупной технологической компании — в России или за рубежом.!', 6, null);
+insert into posts(id, is_active, moderation_status, moderator_id, user_id, time, title, text, view_count)
+VALUES(15,  1, 'ACCEPTED', 1, 7, '2020-12-16 23:11:17', 'Профессия‌ ‌Data‌ ‌Scientist‌', 'Вы станете специалистом по анализу данных, алгоритмам машинного обучения и нейросетям, сможете построить карьеру в крупной технологической компании — в России или за рубежом.!', 6);
 
 
 delete from post_votes;
@@ -181,10 +181,3 @@ insert into captcha_codes(time, code, secret_code)
 values ('2014-12-18 13:17:17', 'captcha_2', 'captcha_secret_2');
 insert into captcha_codes(time, code, secret_code)
 values ('2014-12-18 13:17:17', 'captcha_3', 'captcha_secret_3');
-
-
-
-
-
-
-

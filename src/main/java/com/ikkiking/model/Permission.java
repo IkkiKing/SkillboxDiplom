@@ -1,12 +1,12 @@
 package com.ikkiking.model;
 
-public enum  Permission {
+public enum Permission {
     USER("user:write"),
     MODERATE("user:moderate");
 
     private final String permission;
 
-    Permission(String permission){
+    Permission(String permission) {
         this.permission = permission;
     }
 

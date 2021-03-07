@@ -8,24 +8,31 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
 
 @Service
 @Slf4j
 public class CalendarService {
 
-    private PostRepository postRepository;
+    private final PostRepository postRepository;
 
     @Autowired
     public CalendarService(PostRepository postRepository) {
         this.postRepository = postRepository;
     }
 
-    public ResponseEntity<CalendarResponse> getCalendar(int year) {
-        CalendarResponse calendarResponse = new CalendarResponse();
+    /**
+     * Метод формирующий Календарь.
+     * @param year год за который требуется сформировать кол-во постов по каждой дате
+     *             может быть пустым, в этом случае ставим текущий
+     *
+     * @return Календарь с кол-вом публикаций по датам
+     * */
+    public ResponseEntity<CalendarResponse> calendar(int year) {
         if (year == 0) {
             log.info("The year was setted as default");
             year = DateHelper.getCurrentDate().get(Calendar.YEAR);
@@ -39,7 +46,7 @@ public class CalendarService {
             postsMap = postsByYears.stream()
                     .collect(Collectors.toMap(CalendarCustom::getDate, CalendarCustom::getAmount));
         }
-
+        CalendarResponse calendarResponse = new CalendarResponse();
         calendarResponse.setYears(years);
         calendarResponse.setPosts(postsMap);
         return ResponseEntity.ok(calendarResponse);
