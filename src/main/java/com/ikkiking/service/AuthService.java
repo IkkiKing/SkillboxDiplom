@@ -266,7 +266,7 @@ public class AuthService {
             mailService.send(restoreRequest.getEmail(),
                     "Восстановление пароля DevPub",
                     "Для восстановления вашего пароля, пройдите по ссылке "
-                            + "http://" + blogUrl + "/login/change-password/" + userCode);
+                            + "https://" + blogUrl + "/login/change-password/" + userCode);
         } else {
             log.warn("User not found. Email wasnt sended.");
         }
