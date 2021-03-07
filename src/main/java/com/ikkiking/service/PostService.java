@@ -160,6 +160,10 @@ public class PostService {
                 Sort.by("time").descending());
 
         Page<Post> postPage = postRepository.findAllByTag(sortedByMode, tag);
+        log.info("tag = " + tag);
+        log.info("limit = " + limit);
+        log.info("offset = " + offset);
+        log.info("fetched from db = " + postPage.getTotalElements());
         PostResponse postResponse = convertToPostResponse(postPage);
 
         return ResponseEntity.ok(postResponse);
