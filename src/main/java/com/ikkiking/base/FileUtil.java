@@ -1,6 +1,7 @@
 package com.ikkiking.base;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.imgscalr.Scalr;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 @Data
+@Slf4j
 public class FileUtil {
 
     private static final String FILE_DIR = System.getProperty("user.dir") + "/uploads";
@@ -131,6 +133,7 @@ public class FileUtil {
      * Метод преобразует текущий путь файла в линк для фронта.
      * */
     private String toLinkPath(String path) {
+        log.info("PATH IS = " + path);
         return path.substring(path.indexOf("\\uploads")).replace("\\", "/");
     }
 }
