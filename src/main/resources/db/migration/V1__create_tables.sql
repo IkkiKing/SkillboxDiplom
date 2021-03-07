@@ -22,8 +22,7 @@ create table posts
     time              datetime                             not null,
     title             varchar(255)                         not null,
     text              text                                 not null,
-    view_count        int                                  not null,
-    photo             text
+    view_count        int                                  not null
 );
 
 drop table if exists post_votes;

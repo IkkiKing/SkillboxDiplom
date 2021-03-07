@@ -75,37 +75,41 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query(value = "select DISTINCT YEAR(p.time) from posts p order by p.time desc", nativeQuery = true)
     List<Integer> findYears();
 
-    @Query(value = "select count(p.id) as postsCount,"
-            + "       sum((select count(pv.id)"
-            + "          from post_votes pv"
-            + "         where pv.post_id = p.id"
-            + "            and pv.value = 1)) as likesCount,"
-            + "       sum((select count(pv.id)"
-            + "        from post_votes pv"
-            + "        where pv.post_id = p.id"
-            + "          and pv.value = -1)) as dislikesCount,"
-            + "       sum(p.view_count) as viewsCount,"
-            + "       min(p.time) as firstPublication"
-            + "  from posts p"
-            + "  where p.is_active = 1"
-            + "    and p.moderation_status = 'ACCEPTED'"
-            + "    and p.time < sysdate()"
-            + "    and p.user_id = :userId",
+    @Query(value = "select pp.postsCount, "
+            + "       pv.likesCount,"
+            + "       pv.dislikesCount,"
+            + "       pp.viewsCount,"
+            + "       pp.firstPublication"
+            + " from (select count(p.id) as postsCount,"
+            + "             sum(p.view_count) as viewsCount,"
+            + "             min(p.time) as firstPublication"
+            + "      from posts p"
+            + "      where p.is_active = 1"
+            + "        and p.moderation_status = 'ACCEPTED'"
+            + "        and p.time < sysdate()"
+            + "        and p.user_id = :userId) pp,"
+            + "     (select COUNT(IF(value = 1, 1, null)) as likesCount,"
+            + "             COUNT(IF(value = -1, 1, null)) as dislikesCount"
+            + "      from post_votes pv"
+            + "      where pv.user_id = :userId) pv",
             nativeQuery = true)
     StatisticCustom findMyStatisticByUserId(Long userId);
 
-    @Query(value = "select count(p.id) as postsCount,"
-            + "       sum((select count(pv.id)"
-            + "          from post_votes pv"
-            + "         where pv.post_id = p.id"
-            + "            and pv.value = 1)) as likesCount,"
-            + "       sum((select count(pv.id)"
-            + "        from post_votes pv"
-            + "        where pv.post_id = p.id"
-            + "          and pv.value = -1)) as dislikesCount,"
-            + "       sum(p.view_count) as viewsCount,"
-            + "       min(p.time) as firstPublication"
-            + "  from posts p",
+    @Query(value = "select pp.postsCount, "
+            + "       pv.likesCount,"
+            + "       pv.dislikesCount,"
+            + "       pp.viewsCount,"
+            + "       pp.firstPublication"
+            + " from (select count(p.id) as postsCount,"
+            + "             sum(p.view_count) as viewsCount,"
+            + "             min(p.time) as firstPublication"
+            + "      from posts p"
+            + "      where p.is_active = 1"
+            + "        and p.moderation_status = 'ACCEPTED'"
+            + "        and p.time < sysdate()) pp,"
+            + "     (select COUNT(IF(value = 1, 1, null)) as likesCount,"
+            + "             COUNT(IF(value = -1, 1, null)) as dislikesCount"
+            + "      from post_votes pv) pv",
             nativeQuery = true)
     StatisticCustom findAllStatistic();
 

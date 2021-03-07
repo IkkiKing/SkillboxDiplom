@@ -2,11 +2,11 @@ package com.ikkiking.service;
 
 import com.ikkiking.api.request.ModerationRequest;
 import com.ikkiking.api.request.ProfileRequest;
-import com.ikkiking.api.response.ModerationResponse;
-import com.ikkiking.api.response.ImageResponse;
 import com.ikkiking.api.response.ImageErrorResponse;
-import com.ikkiking.api.response.ProfileResponse;
+import com.ikkiking.api.response.ImageResponse;
+import com.ikkiking.api.response.ModerationResponse;
 import com.ikkiking.api.response.ProfileErrorResponse;
+import com.ikkiking.api.response.ProfileResponse;
 import com.ikkiking.api.response.statistic.StatisticResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.FileUtil;
@@ -30,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.util.Optional;
 
@@ -100,22 +101,21 @@ public class GeneralService {
      * Вспомогательный метод формирующий ResponseObject для статистики.
      * */
     private StatisticResponse getStatisticResponse(StatisticCustom statistic) {
-        if (statistic.getPostsCount() == 0) {
-            log.info("Posts count equal zero");
-            return new StatisticResponse(
-                    0L,
-                    0L,
-                    0L,
-                    0L,
-                    null);
-        } else {
-            return new StatisticResponse(
-                    statistic.getPostsCount(),
-                    statistic.getLikesCount(),
-                    statistic.getDislikesCount(),
-                    statistic.getViewsCount(),
-                    statistic.getFirstPublication().getTime() / 1000L);
-        }
+        Long likesCount = statistic.getLikesCount() == null ?
+                0 : statistic.getLikesCount();
+        Long dislikesCount = statistic.getDislikesCount() == null ?
+                0 : statistic.getDislikesCount();
+        Long viewsCount = statistic.getViewsCount() == null ?
+                0 : statistic.getViewsCount();
+        Long firstPublication = statistic.getFirstPublication() == null ?
+                null : statistic.getFirstPublication().getTime() / 1_000L;
+
+        return new StatisticResponse(
+            statistic.getPostsCount(),
+            likesCount,
+            dislikesCount,
+            viewsCount,
+            firstPublication);
     }
 
     /**

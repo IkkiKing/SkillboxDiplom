@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/forum?serverTimezone=UTC
+    url: jdbc:${CLEARDB_DATABASE_URL:mysql://localhost:3306/forum?serverTimezone=UTC}
     username: root
     password: CTpmqjV99F
   jpa:
@@ -16,6 +16,11 @@ spring:
     username: DeveloperSmelovEA@yandex.ru
     password: DevelopSomething
     protocol: smtps
+  flyway:
+    baselineOnMigrate: true
+
+server:
+  port: ${PORT:8080}
 
 mail:
   email: DeveloperSmelovEA@yandex.ru

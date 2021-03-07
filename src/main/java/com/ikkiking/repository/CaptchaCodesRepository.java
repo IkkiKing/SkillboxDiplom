@@ -13,8 +13,7 @@ public interface CaptchaCodesRepository extends JpaRepository<CaptchaCodes, Long
     int countByCodeAndSecretCode(String code, String secretCode);
 
     @Modifying
-    @Query(value = "delete from captcha_codes cc "
-            + "where cc.time < :deleteDate",
+    @Query(value = "delete from captcha_codes where DATE(captcha_codes.time) < :deleteDate",
             nativeQuery = true)
     void deleteOldCaptcha(Date deleteDate);
 }

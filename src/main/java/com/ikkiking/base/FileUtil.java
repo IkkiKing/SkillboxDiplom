@@ -127,6 +127,9 @@ public class FileUtil {
         filePath = toLinkPath(file.getPath());
     }
 
+    /**
+     * Метод преобразует текущий путь файла в линк для фронта.
+     * */
     private String toLinkPath(String path) {
         return path.substring(path.indexOf("\\uploads")).replace("\\", "/");
     }
