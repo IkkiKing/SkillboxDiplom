@@ -66,6 +66,9 @@ public class AuthService {
     @Value("${captcha.secretCode.length}")
     private int captchaSecretCodeLength;
 
+    @Value("${blog.url}")
+    private String blogUrl;
+
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
@@ -263,7 +266,7 @@ public class AuthService {
             mailService.send(restoreRequest.getEmail(),
                     "Восстановление пароля DevPub",
                     "Для восстановления вашего пароля, пройдите по ссылке "
-                            + "http://localhost:8080/login/change-password/" + userCode);
+                            + "http://" + blogUrl + "/login/change-password/" + userCode);
         } else {
             log.warn("User not found. Email wasnt sended.");
         }

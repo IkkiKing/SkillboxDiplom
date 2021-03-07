@@ -33,6 +33,7 @@ blog:
   email: mail@mail.ru
   copyright: Дмитрий Сергеев
   copyrightFrom: 2005
+  url: smelov-java-skillbox.herokuapp.com
 
 captcha:
   delete:
