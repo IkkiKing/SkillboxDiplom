@@ -133,7 +133,12 @@ public class FileUtil {
      * Метод преобразует текущий путь файла в линк для фронта.
      * */
     private String toLinkPath(String path) {
-        log.info("PATH IS = " + path);
-        return path.substring(path.indexOf("\\uploads")).replace("\\", "/");
+        String linkPath = path;
+        if (path.contains("/uploads")) {
+            linkPath = path.substring(path.indexOf("/uploads"));
+        } else if (path.contains("\\uploads")) {
+            linkPath = path.substring(path.indexOf("\\uploads")).replace("\\", "/");
+        }
+        return linkPath;
     }
 }
