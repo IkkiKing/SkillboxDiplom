@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,18 +33,22 @@ public class CalendarService {
      * */
     public ResponseEntity<CalendarResponse> calendar(int year) {
         if (year == 0) {
-            log.info("The year was setted as default");
             year = DateHelper.getCurrentDate().get(Calendar.YEAR);
+            log.info("The year was setted as default: " + year);
         }
-
+        final Integer searchYear = year;
         List<CalendarCustom> postsByYears = postRepository.findPostByYear(year);
-        List<Integer> years = postRepository.findYears();
 
-        Map<String, Long> postsMap = new HashMap<>();
-        if (postsByYears != null) {
-            postsMap = postsByYears.stream()
-                    .collect(Collectors.toMap(CalendarCustom::getDate, CalendarCustom::getAmount));
-        }
+        List<Integer> years = postsByYears.stream()
+                .map(p -> p.getYear())
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<String, Long> postsMap = postsByYears.stream()
+                    .filter(f -> f.getYear().equals(Integer.valueOf(searchYear)))
+                    .collect(Collectors.toMap(CalendarCustom::getDate,
+                            CalendarCustom::getAmount));
+
         CalendarResponse calendarResponse = new CalendarResponse();
         calendarResponse.setYears(years);
         calendarResponse.setPosts(postsMap);

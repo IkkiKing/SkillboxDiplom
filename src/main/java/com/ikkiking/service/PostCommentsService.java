@@ -1,6 +1,7 @@
 package com.ikkiking.service;
 
 import com.ikkiking.api.request.CommentRequest;
+import com.ikkiking.api.response.CommentAddError;
 import com.ikkiking.api.response.CommentAddResponse;
 import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.exception.CommentException;
@@ -49,7 +50,8 @@ public class PostCommentsService {
 
         Optional<Post> post = postRepository.findById(postId);
         if (!post.isPresent()) {
-            throw new CommentException("Пост на который ссылается комментарий не найден!");
+            throw new CommentException(
+                    new CommentAddError("Пост на который ссылается комментарий не найден!"));
         }
 
         PostComments comment = new PostComments();
@@ -71,17 +73,23 @@ public class PostCommentsService {
      * */
     private void validateCommentRequest(String text,
                                         Long parentId) {
+        StringBuilder error = new StringBuilder();
         if (text == null || text.isEmpty()) {
-            throw new CommentException("Текст комментария не задан");
+            error.append("Текст комментария не задан. ");
+        } else {
+            if (text.length() < commentTexMinLength) {
+                error.append("Текст комментария слишком короткий. ");
+            }
         }
-        if (text.length() < commentTexMinLength) {
-            throw new CommentException("Текст комментария слишком короткий");
-        }
+
         if (parentId != null) {
             Optional<PostComments> postComments = postCommentsRepository.findById(parentId);
             if (!postComments.isPresent()) {
-                throw new CommentException("Родительсткий комментарий не найден!");
+                error.append("Родительсткий комментарий не найден! ");
             }
+        }
+        if (error.length() != 0) {
+            throw new CommentException(new CommentAddError(error.toString()));
         }
     }
 

@@ -6,11 +6,10 @@ import com.github.cage.image.Painter;
 import lombok.Data;
 import org.apache.commons.lang3.RandomStringUtils;
 import java.util.Base64;
-import java.util.Random;
 
 @Data
 public class CaptchaUtil {
-
+    private static final Float COMPRESS_RATIO = 0.5F;
     private final int captchaLength;
     private final int captchaWidth;
     private final int captchaHeight;
@@ -48,7 +47,7 @@ public class CaptchaUtil {
                 null,
                 null,
                 "png",
-                0.5F,
+                COMPRESS_RATIO,
                 generator,
                 null);
 

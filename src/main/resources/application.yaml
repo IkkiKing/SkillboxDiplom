@@ -52,6 +52,7 @@ password:
       length: 20
 
 file:
+  path: /uploads
   name:
     length : 20
   image:
@@ -60,11 +61,21 @@ file:
     width: 36
     height: 36
 
+cloud:
+  image:
+    url: cloudinary://942858327361784:NCZQ3GuY9FPG3fv3p0BpuzrzaeM@db20eod0q
+
+storage:
+  mode: cloud
+
 comment:
   text:
     min:
       length: 3
 post:
+  announce:
+    max:
+      length: 150
   title:
     min:
       length: 3

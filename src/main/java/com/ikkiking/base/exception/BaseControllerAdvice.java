@@ -1,6 +1,5 @@
 package com.ikkiking.base.exception;
 
-import com.ikkiking.api.response.CommentAddError;
 import com.ikkiking.api.response.CommentAddResponse;
 import com.ikkiking.api.response.LoginResponse;
 import com.ikkiking.api.response.PasswordResponse;
@@ -8,6 +7,7 @@ import com.ikkiking.api.response.ProfileResponse;
 import com.ikkiking.api.response.RegisterResponse;
 import com.ikkiking.api.response.VoteResponse;
 import com.ikkiking.api.response.post.PostReturnResponse;
+import com.ikkiking.api.response.tag.TagResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -51,7 +51,7 @@ public class BaseControllerAdvice {
     @ExceptionHandler(CommentException.class)
     public Object commentException(CommentException ex) {
         CommentAddResponse commentAddResponse = new CommentAddResponse();
-        commentAddResponse.setErrors(new CommentAddError(ex.getMessage()));
+        commentAddResponse.setErrors(ex.getCommentAddError());
         return new ResponseEntity<>(commentAddResponse, HttpStatus.BAD_REQUEST);
     }
 
@@ -88,6 +88,11 @@ public class BaseControllerAdvice {
     @ExceptionHandler(VoteException.class)
     public Object voteException() {
         return ResponseEntity.ok(new VoteResponse());
+    }
+
+    @ExceptionHandler(TagNotFoundException.class)
+    public Object tagNotFoundException() {
+        return ResponseEntity.ok(new TagResponse());
     }
 
     private Object response(HttpStatus status, RuntimeException ex) {

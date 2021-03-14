@@ -10,12 +10,19 @@ import java.util.List;
 @Repository
 public interface TagRepository extends JpaRepository<Tag, Integer> {
 
-    @Query(value = "select t.name as name, "
-            + "(select count(*) from tag2post t2p where t2p.tag_id = t.id) / "
-            + "(select count(*) from posts p where p.is_active = 1 "
-            + "and p.moderation_status = 'ACCEPTED' and p.time < sysdate()) as weight "
-            + "from tags t "
-            + "where (:query is null or t.name = :query) group by t.id",
+    @Query(value = "select (select count(*)"
+            + "        from posts pp"
+            + "        where pp.is_active = 1"
+            + "          and pp.moderation_status = 'ACCEPTED'"
+            + "          and pp.time < sysdate()) as postsCount,"
+            + "       count(*) as postsByTagCount, t.name "
+            + "from posts p, tag2post t2p, tags t "
+            + "where p.is_active = 1"
+            + "  and p.moderation_status = 'ACCEPTED'"
+            + "  and p.time < sysdate()"
+            + "  and p.id = t2p.post_id"
+            + "  and t2p.tag_id = t.id"
+            + " group by t.id",
             nativeQuery = true)
     List<TagCustom> findAllByTags(String query);
 

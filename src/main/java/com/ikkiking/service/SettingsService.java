@@ -41,7 +41,7 @@ public class SettingsService {
                     settingsResponse.setStatisticsIsPublic(setting.getValue().equals("YES"));
                     break;
                 default:
-                    log.warn("UNKNOWN SETTING");
+                    log.warn("UNKNOWN SETTING: " + setting.getCode());
             }
         });
         return ResponseEntity.ok(settingsResponse);
@@ -80,7 +80,7 @@ public class SettingsService {
                     setting.setValue(settingsRequest.isStatisticIsPublic() ? "YES" : "NO");
                     break;
                 default:
-                    log.warn("UNKNOWN SETTING");
+                    log.warn("UNKNOWN SETTING: " + setting.getCode());
             }
         });
         globalSettingsRepository.saveAll(globalSettings);

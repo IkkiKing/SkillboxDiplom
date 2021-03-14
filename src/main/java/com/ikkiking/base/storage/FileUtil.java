@@ -1,6 +1,5 @@
-package com.ikkiking.base;
+package com.ikkiking.base.storage;
 
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.imgscalr.Scalr;
@@ -14,53 +13,73 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
-@Data
 @Slf4j
-public class FileUtil {
+public class FileUtil extends StorageUtil {
 
-    private static final String FILE_DIR = System.getProperty("user.dir") + "/uploads";
-    private final MultipartFile multipartFile;
     private final int nameLength;
 
-    private String formatName;
-    private String filePath;
-
-    public FileUtil(MultipartFile multipartFile,
+    public FileUtil(String uploadPath,
+                    MultipartFile multipartFile,
                     int nameLength) {
-        this.multipartFile = multipartFile;
+        super(uploadPath, multipartFile);
         this.nameLength = nameLength;
-        getImageFileExtension();
+    }
+
+
+    @Override
+    public String uploadImage() throws IOException {
+        String randomString = getRandomName();
+        String folderName = createRandomDirs(uploadPath, randomString);
+        String fileName = getRandomName() + "." + formatName;
+        return saveFile(folderName, fileName);
+    }
+
+
+    @Override
+    public String uploadPhoto(final int width,
+                              final int height) throws IOException {
+
+        File file = new File(uploadPath + "/" + getRandomName() + "." + formatName);
+
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        ImageIO.write(resizeImage(width, height),
+                formatName,
+                file);
+        return toLinkPath(file.getPath());
     }
 
     /**
-     * Определяет тип изображения MultiPartFile.
+     * Метод сжатия изображения.
+     *
+     * @param width желаемая ширина
+     * @param height желаемая высота
+     *
+     * @return сжатое изображение
      * */
-    private String getImageFileExtension() {
-        formatName = "unknown";
-        if (multipartFile.getContentType().equals("image/jpeg")) {
-            formatName = "jpg";
-        }
-        if (multipartFile.getContentType().equals("image/png")) {
-            formatName = "png";
-        }
-        return formatName;
+    private BufferedImage resizeImage(final int width,
+                                      final int height) throws IOException {
+        BufferedImage bufferedImage = ImageIO.read(multipartFile.getInputStream());
+        return Scalr.resize(bufferedImage, width, height);
     }
 
     /**
      * Метод формирования директорий для хранения изображений.
      *
      * @param imageFilePath Путь для сохранения изображения
-     * @param randomString Строка из которой формируются названия директорий
-     * */
+     * @param randomString  Строка из которой формируются названия директорий
+     */
     private String createRandomDirs(String imageFilePath, String randomString) {
+        final int folders = 3;
+        final int folderName = 2;
         int i = 0;
-
         StringBuilder builder = new StringBuilder();
         builder.append(imageFilePath);
 
-        while (i < 6) {
+        while (i < folders * folderName) {
 
-            builder.append("/" + randomString.substring(i, i + 2));
+            builder.append("/" + randomString.substring(i, i + folderName));
             File theDir = new File(builder.toString());
             if (!theDir.exists()) {
                 theDir.mkdirs();
@@ -74,10 +93,9 @@ public class FileUtil {
      * Сохранение изображения на сервер.
      *
      * @param folderName директория для сохранения
-     * @param fileName имя файла
+     * @param fileName   имя файла
      * @return относительное имя файла
-     *
-     * */
+     */
     private String saveFile(String folderName,
                             String fileName) throws IOException {
         Path folderPath = Paths.get(folderName);
@@ -90,48 +108,9 @@ public class FileUtil {
         return toLinkPath(imagePath.toString());
     }
 
-
-    /**
-     * Загрузка изображения на сервер.
-     * */
-    public void uploadImage() throws IOException {
-
-        String randomString = RandomStringUtils.random(nameLength, true, false);
-
-        String folderName = createRandomDirs(FILE_DIR, randomString);
-
-        String fileName = randomString.substring(8) + "." + formatName;
-
-        filePath = saveFile(folderName, fileName);
-    }
-
-    /**
-     * Загрузка фото на сервер в сжатом объеме.
-     *
-     * @param width ширина для сжатия
-     * @param height высота для сжатия
-     * */
-    public void uploadPhoto(final int width,
-                            final int height) throws IOException {
-
-        BufferedImage bufferedImage = ImageIO.read(multipartFile.getInputStream());
-        bufferedImage = Scalr.resize(bufferedImage, width, height);
-
-        String randomString = RandomStringUtils.random(nameLength, true, false);
-
-        File file = new File(FILE_DIR + "/" + randomString + "." + formatName);
-
-        if (!file.exists()) {
-            file.mkdirs();
-        }
-
-        ImageIO.write(bufferedImage, formatName, file);
-        filePath = toLinkPath(file.getPath());
-    }
-
     /**
      * Метод преобразует текущий путь файла в линк для фронта.
-     * */
+     */
     private String toLinkPath(String path) {
         String linkPath = path;
         if (path.contains("/uploads")) {
@@ -141,4 +120,13 @@ public class FileUtil {
         }
         return linkPath;
     }
+
+    /**
+     * Метод генерирует рандомное имя файла из заданного кол-ва символов.
+     */
+    private String getRandomName() {
+        return RandomStringUtils.random(nameLength, true, false);
+    }
+
+
 }

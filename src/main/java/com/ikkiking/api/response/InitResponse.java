@@ -1,6 +1,5 @@
 package com.ikkiking.api.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +17,6 @@ public class InitResponse {
     private String phone;
 
     @Value("${blog.email}")
-    @JsonProperty("e_mail")
     private String email;
 
     @Value("${blog.copyright}")

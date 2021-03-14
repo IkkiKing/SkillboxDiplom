@@ -37,13 +37,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,6 +54,8 @@ public class PostService {
     private int postTitleMinLength;
     @Value("${post.text.min.length}")
     private int postTextMinLength;
+    @Value("${post.announce.max.length}")
+    private int postAnnounceMaxLength;
 
     private final PostRepository postRepository;
     private final PostVoteRepository postVoteRepository;
@@ -111,7 +113,7 @@ public class PostService {
                 Sort.by("time").descending());
 
         Page<Post> postPage;
-        if (query.isEmpty() || query == null) {
+        if (query.trim().isEmpty() || query == null) {
             postPage = postRepository.findAll(sortedByMode);
         } else {
             postPage = postRepository.findAllBySearch(sortedByMode, query);
@@ -179,8 +181,7 @@ public class PostService {
         Pageable sortedByMode = PageRequest.of(
                 getPageByOffsetAndLimit(limit, offset),
                 limit,
-                Sort.by("time").descending()
-        );
+                Sort.by("time").descending());
 
         String email = ContextUser.getEmailFromContext();
 
@@ -253,7 +254,7 @@ public class PostService {
                                      int offset,
                                      String mode) {
 
-        Pageable sortedByMode;
+        Pageable pageable;
         Page<Post> posts;
 
         int page = getPageByOffsetAndLimit(limit, offset);
@@ -262,21 +263,21 @@ public class PostService {
 
         switch (mode) {
             case "early":
-                sortedByMode = PageRequest.of(page, limit, Sort.by("time").ascending());
-                posts = postRepository.findAll(sortedByMode);
+                pageable = PageRequest.of(page, limit, Sort.by("time").ascending());
+                posts = postRepository.findAll(pageable);
                 break;
             case "popular":
-                sortedByMode = PageRequest.of(page, limit);
-                posts = postRepository.findAllByPopular(sortedByMode);
+                pageable = PageRequest.of(page, limit);
+                posts = postRepository.findAllByPopular(pageable);
                 break;
             case "best":
-                sortedByMode = PageRequest.of(page, limit);
-                posts = postRepository.findAllByBest(sortedByMode);
+                pageable = PageRequest.of(page, limit);
+                posts = postRepository.findAllByBest(pageable);
                 break;
             //RECENT
             default:
-                sortedByMode = PageRequest.of(page, limit, Sort.by("time").descending());
-                posts = postRepository.findAll(sortedByMode);
+                pageable = PageRequest.of(page, limit, Sort.by("time").descending());
+                posts = postRepository.findAll(pageable);
                 break;
         }
         return posts;
@@ -297,11 +298,16 @@ public class PostService {
                     post.getUser().getId(),
                     post.getUser().getName());
 
+            String announce = post.getText().replaceAll("\\<.*?>", "");
+            if (announce.length() > postAnnounceMaxLength) {
+                announce = announce.substring(0, postAnnounceMaxLength).concat("...");
+            }
+
             listPosts.add(new PostForResponse(post.getId(),
-                    post.getTime().getTime() / 1_000L,
+                    TimeUnit.MILLISECONDS.toSeconds(post.getTime().getTime()),
                     userResponse,
                     post.getTitle(),
-                    post.getText(),
+                    announce,
                     votes.getLikes(),
                     votes.getDislikes(),
                     Long.valueOf(post.getCommentsList().size()),
@@ -320,8 +326,9 @@ public class PostService {
      * @param id Идентификатор поста
      */
     public ResponseEntity<PostByIdResponse> postById(long id) {
-        Post post = postRepository.findById(id).orElseThrow(() ->
-                new PostNotFoundException("Пост не найден!"));
+
+        Post post = validatePostById(id);
+
         UserResponse userResponse = new UserResponse(
                 post.getUser().getId(),
                 post.getUser().getName());
@@ -335,7 +342,7 @@ public class PostService {
 
         PostByIdResponse postByIdResponse = new PostByIdResponse(
                 post.getId(),
-                post.getTime().getTime() / 1_000L,
+                TimeUnit.MILLISECONDS.toSeconds(post.getTime().getTime()),
                 post.isActive(),
                 userResponse,
                 post.getTitle(),
@@ -354,13 +361,35 @@ public class PostService {
     }
 
     /**
+     * Метод валидации поста по ID.
+     */
+    private Post validatePostById(long postId) {
+        //Проверяем наличие поста в БД
+        Post post = postRepository.findById(postId).orElseThrow(() ->
+                new PostNotFoundException("Пост не найден!"));
+
+        //Если посте неактивен/Не утвержден/Его дата еще не наступила
+        if (!post.isActive()
+                || !post.getModerationStatus().equals(ModerationStatus.ACCEPTED)
+                || post.getTime().compareTo(DateHelper.getCurrentDate().getTime()) == 1) {
+            //А так же авторизованный пользователь не является его автором/модератором
+            User user = ContextUser.getUser(userRepository).orElseThrow(() ->
+                    new PostNotFoundException("Пользователь неавторизован. Пост недоступен"));
+            if (!post.getUser().equals(user) && !user.isModerator()) {
+                new PostNotFoundException("Пост недоступен!");
+            }
+        }
+        return post;
+    }
+
+    /**
      * Вспомогательный метод заполняет коллекцию DTO CommentResponse.
      */
     private List<CommentResponse> getCommentResponseList(Post post) {
         return post.getCommentsList().stream()
                 .map(p -> new CommentResponse(
                         p.getId(),
-                        p.getTime().getTime() / 1_000L,
+                        TimeUnit.MILLISECONDS.toSeconds(p.getTime().getTime()),
                         p.getText(),
                         new CommentUserResponse(
                                 p.getUser().getId(),
@@ -376,15 +405,12 @@ public class PostService {
     private boolean isIncrementViewCount(User user) {
 
         boolean isIncrementViewCount = true;
-
-        try {
-            User currentUser = ContextUser.getUserFromContext(userRepository);
-
-            if (currentUser.isModerator() || (currentUser.getId() == user.getId())) {
+        Optional<User> currentUser = ContextUser.getUser(userRepository);
+        if (currentUser.isPresent()) {
+            if (currentUser.get().isModerator()
+                    || (currentUser.get().getId() == user.getId())) {
                 isIncrementViewCount = false;
             }
-        } catch (UsernameNotFoundException ex) {
-            log.info("User unauthorized found, increment views");
         }
         return isIncrementViewCount;
     }
@@ -450,14 +476,15 @@ public class PostService {
      * Вспомогательный метод, проверяет корректность поста перед сохранением.
      */
     private void validatePost(PostRequest postRequest) {
+        PostErrorResponse postErrorResponse = new PostErrorResponse();
         if (postRequest.getTitle().length() < postTitleMinLength) {
-            PostErrorResponse postErrorResponse = new PostErrorResponse();
             postErrorResponse.setTitle("Заголовок не установлен");
-            throw new PostException(postErrorResponse);
         }
         if (postRequest.getText().length() < postTextMinLength) {
-            PostErrorResponse postErrorResponse = new PostErrorResponse();
             postErrorResponse.setText("Текст публикации слишком короткий");
+        }
+        if (postErrorResponse.getTitle() != null
+                || postErrorResponse.getText() != null) {
             throw new PostException(postErrorResponse);
         }
     }
@@ -473,11 +500,11 @@ public class PostService {
             tag2PostRepository.deleteAllByPostId(postId);
 
             List<Tag2Post> tag2PostList = tagList.stream().map(m -> {
-                    Tag2Post tag2Post = new Tag2Post();
-                    tag2Post.setTagId(m.getId());
-                    tag2Post.setPostId(postId);
-                    return tag2Post;
-                }
+                Tag2Post tag2Post = new Tag2Post();
+                tag2Post.setTagId(m.getId());
+                tag2Post.setPostId(postId);
+                return tag2Post;
+            }
             ).collect(Collectors.toList());
             tag2PostRepository.saveAll(tag2PostList);
         }

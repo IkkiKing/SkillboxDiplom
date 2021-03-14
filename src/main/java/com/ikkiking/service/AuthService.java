@@ -93,7 +93,7 @@ public class AuthService {
 
     /**
      * Аутентификация - логин.
-     * */
+     */
     public ResponseEntity<LoginResponse> login(LoginRequest loginRequest) {
 
         Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
@@ -109,7 +109,7 @@ public class AuthService {
 
     /**
      * Проверка статуса авторизации.
-     * */
+     */
     public ResponseEntity<LoginResponse> check(Principal principal) {
         if (principal == null) {
             return ResponseEntity.ok(new LoginResponse());
@@ -119,7 +119,7 @@ public class AuthService {
 
     /**
      * Вспомогательный метод формирования LoginResponse по email пользователя.
-     * */
+     */
     private LoginResponse getLoginResponse(String email) {
 
         com.ikkiking.model.User currentUser = userRepository.findByEmail(email)
@@ -135,15 +135,12 @@ public class AuthService {
         userLoginResponse.setModerationCount(
                 currentUser.isModerator() ? postRepository.countPostsForModeration() : 0);
 
-        LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setResult(true);
-        loginResponse.setUserLoginResponse(userLoginResponse);
-        return loginResponse;
+        return new LoginResponse(true, userLoginResponse);
     }
 
     /**
      * Формирование капчи.
-     * */
+     */
     @Transactional
     public ResponseEntity<AuthCaptchaResponse> captcha() {
         CaptchaUtil captchaUtil = new CaptchaUtil(
@@ -171,7 +168,7 @@ public class AuthService {
 
     /**
      * Метод удаления старой капчи.
-     * */
+     */
     private void deleteOldCaptcha() {
         Calendar calendar = DateHelper.getCurrentDate();
         calendar.add(Calendar.HOUR, -captchaDeleteHours);
@@ -181,7 +178,7 @@ public class AuthService {
 
     /**
      * Логаут.
-     * */
+     */
     public ResponseEntity<AuthLogoutResponse> logout() {
         SecurityContextHolder.clearContext();
         return ResponseEntity.ok(new AuthLogoutResponse(true));
@@ -189,7 +186,7 @@ public class AuthService {
 
     /**
      * Регистрация.
-     * */
+     */
     @Transactional
     public ResponseEntity<RegisterResponse> register(RegisterRequest registerRequest) {
         //Валидация корректности запроса
@@ -210,49 +207,49 @@ public class AuthService {
 
     /**
      * Вспомогательный метод проверки валидности регистрационных данных.
-     * */
+     */
     private void validateRegisterRequest(RegisterRequest registerRequest) {
         RegisterErrorResponse registerErrorResponse = new RegisterErrorResponse();
-
         //Если регистрация закрыта
         if (!SettingsService.getSettingsValue(globalSettingsRepository, "MULTIUSER_MODE")) {
             throw new RegistrationClosedException("Register is closed");
         }
         if (registerRequest.getEmail().isEmpty() || registerRequest.getEmail() == null) {
             registerErrorResponse.setEmail("E-mail не может быть пустым");
-            throw new RegistrationException(registerErrorResponse);
-        }
-        if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
-            registerErrorResponse.setEmail("Этот e-mail уже зарегистрирован");
-            throw new RegistrationException(registerErrorResponse);
+        } else {
+            if (userRepository.findByEmail(registerRequest.getEmail()).isPresent()) {
+                registerErrorResponse.setEmail("Этот e-mail уже зарегистрирован");
+            }
         }
         if (registerRequest.getName().isEmpty() || registerRequest.getName() == null) {
             registerErrorResponse.setName("Имя не может быть пустым");
-            throw new RegistrationException(registerErrorResponse);
         }
         if (registerRequest.getPassword().isEmpty() || registerRequest.getPassword() == null) {
             registerErrorResponse.setPassword("Пароль не может быть пустым");
-            throw new RegistrationException(registerErrorResponse);
-        }
-        if (registerRequest.getPassword().length() < passwordMinLength) {
-            registerErrorResponse.setPassword("Пароль не может быть короче 6 символов");
-            throw new RegistrationException(registerErrorResponse);
+        } else {
+            if (registerRequest.getPassword().length() < passwordMinLength) {
+                registerErrorResponse.setPassword("Пароль не может быть короче 6 символов");
+            }
         }
         if (registerRequest.getCaptcha().isEmpty() || registerRequest.getCaptcha() == null) {
             registerErrorResponse.setCaptcha("Код с картинки не может быть пустым");
-            throw new RegistrationException(registerErrorResponse);
+        } else {
+            if (captchaCodesRepository.countByCodeAndSecretCode(registerRequest.getCaptcha(),
+                    registerRequest.getCaptchaSecret()) == 0) {
+                registerErrorResponse.setCaptcha("Код с картинки указан не верно");
+            }
         }
-
-        if (captchaCodesRepository.countByCodeAndSecretCode(registerRequest.getCaptcha(),
-                                                            registerRequest.getCaptchaSecret()) == 0) {
-            registerErrorResponse.setCaptcha("Код с картинки указан не верно");
+        if (registerErrorResponse.getEmail() != null
+                || registerErrorResponse.getName() != null
+                || registerErrorResponse.getPassword() != null
+                || registerErrorResponse.getCaptcha() != null) {
             throw new RegistrationException(registerErrorResponse);
         }
     }
 
     /**
      * Восстановление пароля.
-     * */
+     */
     @Transactional
     public ResponseEntity<RestoreResponse> restore(RestoreRequest restoreRequest) {
         RestoreResponse restoreResponse = new RestoreResponse();
@@ -267,16 +264,16 @@ public class AuthService {
                     "Восстановление пароля DevPub",
                     "Для восстановления вашего пароля, пройдите по ссылке "
                             + "https://" + blogUrl + "/login/change-password/" + userCode);
+            restoreResponse.setResult(true);
         } else {
             log.warn("User not found. Email wasnt sended.");
         }
-        restoreResponse.setResult(true);
         return ResponseEntity.ok(restoreResponse);
     }
 
     /**
      * Изменение пароля.
-     * */
+     */
     @Transactional
     public ResponseEntity<PasswordResponse> password(PasswordRequest passwordRequest) {
 
@@ -305,24 +302,27 @@ public class AuthService {
 
     /**
      * Вспомогательный метод проверки валидности регистрационных данных.
-     * */
+     */
     private void validateRestorePasswordRequest(PasswordRequest passwordRequest) {
         PasswordErrorResponse passwordErrorResponse = new PasswordErrorResponse();
 
         String password = passwordRequest.getPassword();
         if (password.isEmpty() || password == null) {
             passwordErrorResponse.setPassword("Пароль не может быть пустым");
-            throw new PasswordRestoreException(passwordErrorResponse);
+        } else {
+            if (password.length() < passwordMinLength) {
+                passwordErrorResponse.setPassword("Пароль короче " + passwordMinLength + " символов");
+            }
         }
-        if (password.length() < passwordMinLength) {
-            passwordErrorResponse.setPassword("Пароль короче 6 символов");
-            throw new PasswordRestoreException(passwordErrorResponse);
-        }
+
         if (captchaCodesRepository.countByCodeAndSecretCode(
                 passwordRequest.getCaptcha(),
                 passwordRequest.getCaptchaSecret()) == 0) {
-
             passwordErrorResponse.setCaptcha("Код с картинки введён неверно");
+        }
+
+        if (passwordErrorResponse.getPassword() != null
+                || passwordErrorResponse.getCaptcha() != null) {
             throw new PasswordRestoreException(passwordErrorResponse);
         }
     }

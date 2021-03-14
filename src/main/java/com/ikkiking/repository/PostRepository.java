@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -25,7 +26,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' "
             + "and p.time < sysdate() GROUP BY p.id ORDER BY "
-            + "(select count(*) from post_votes pv where pv.post_id = p.id and pv.value = 1) desc",
+            + "(select count(*) from post_votes pv where pv.post_id = p.id and pv.value = 1) desc, "
+            + "(select count(*) from post_votes pv where pv.post_id = p.id and pv.value = -1) asc,"
+            + " p.view_count desc",
             nativeQuery = true)
     Page<Post> findAllByBest(Pageable pageable);
 
@@ -66,14 +69,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query(value = "select YEAR(p.time) as year, DATE_FORMAT(DATE(p.time), '%Y-%m-%d') as date, "
             + "count(*) as amount from posts p "
-            + "where YEAR(p.time) = :year and p.is_active = 1 and p.moderation_status = 'ACCEPTED' "
+            + "where p.is_active = 1 and p.moderation_status = 'ACCEPTED' "
             + "and p.time < sysdate()  "
-            + "group by year, date order by date",
+            + "group by year, date order by p.time",
             nativeQuery = true)
     List<CalendarCustom> findPostByYear(int year);
-
-    @Query(value = "select DISTINCT YEAR(p.time) from posts p order by p.time desc", nativeQuery = true)
-    List<Integer> findYears();
 
     @Query(value = "select pp.postsCount, "
             + "       pv.likesCount,"
@@ -116,4 +116,5 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query(value = "select count(*) from posts p where p.moderation_status = 'NEW' and p.moderator_id is null",
             nativeQuery = true)
     int countPostsForModeration();
+
 }
