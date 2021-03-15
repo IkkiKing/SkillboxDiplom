@@ -79,9 +79,13 @@ post:
   title:
     min:
       length: 3
+    max:
+      length: 100
   text:
     min:
       length: 50
+    max:
+      length: 250
 
 
 

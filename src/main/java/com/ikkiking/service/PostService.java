@@ -52,10 +52,15 @@ public class PostService {
 
     @Value("${post.title.min.length}")
     private int postTitleMinLength;
+    @Value("${post.title.max.length}")
+    private int postTitleMaxLength;
     @Value("${post.text.min.length}")
     private int postTextMinLength;
+    @Value("${post.text.max.length}")
+    private int postTextMaxLength;
     @Value("${post.announce.max.length}")
     private int postAnnounceMaxLength;
+
 
     private final PostRepository postRepository;
     private final PostVoteRepository postVoteRepository;
@@ -478,10 +483,20 @@ public class PostService {
     private void validatePost(PostRequest postRequest) {
         PostErrorResponse postErrorResponse = new PostErrorResponse();
         if (postRequest.getTitle().length() < postTitleMinLength) {
-            postErrorResponse.setTitle("Заголовок не установлен");
+            postErrorResponse.setTitle("Заголовок не установлен. Минимальная длина заголовка: "
+                    + postTitleMinLength);
+        }
+        if (postRequest.getTitle().length() > postTitleMaxLength) {
+            postErrorResponse.setTitle("Максимальная длина заголовка: "
+                    + postTitleMaxLength);
         }
         if (postRequest.getText().length() < postTextMinLength) {
-            postErrorResponse.setText("Текст публикации слишком короткий");
+            postErrorResponse.setText("Текст публикации слишком короткий. Минимальный: "
+                    + postTextMinLength);
+        }
+        if (postRequest.getText().length() < postTextMaxLength) {
+            postErrorResponse.setText("Текст публикации слишком большой. Максимальный: "
+                    + postTextMaxLength);
         }
         if (postErrorResponse.getTitle() != null
                 || postErrorResponse.getText() != null) {
