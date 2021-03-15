@@ -307,7 +307,9 @@ public class PostService {
                     post.getUser().getId(),
                     post.getUser().getName());
 
-            String announce = post.getText().replaceAll("\\<.*?>", "");
+            String announce = post.getText()
+                    .replaceAll("\\<.*?>", "")
+                    .replaceAll("\u00a0","");
             if (announce.length() > postAnnounceMaxLength) {
                 announce = announce.substring(0, postAnnounceMaxLength).concat("...");
             }
