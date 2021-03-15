@@ -309,7 +309,7 @@ public class PostService {
 
             String announce = post.getText()
                     .replaceAll("\\<.*?>", "")
-                    .replaceAll("&nbsp;","");
+                    .replaceAll("&nbsp;"," ");
             if (announce.length() > postAnnounceMaxLength) {
                 announce = announce.substring(0, postAnnounceMaxLength).concat("...");
             }
