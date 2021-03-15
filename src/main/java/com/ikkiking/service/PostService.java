@@ -50,15 +50,19 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PostService {
 
-    @Value("${post.title.min.length}")
+    @Value("${post.title.length.min}")
     private int postTitleMinLength;
-    @Value("${post.title.max.length}")
+
+    @Value("${post.title.length.max}")
     private int postTitleMaxLength;
-    @Value("${post.text.min.length}")
+
+    @Value("${post.text.length.min}")
     private int postTextMinLength;
-    @Value("${post.text.max.length}")
+
+    @Value("${post.text.length.max}")
     private int postTextMaxLength;
-    @Value("${post.announce.max.length}")
+
+    @Value("${post.announce.length.max}")
     private int postAnnounceMaxLength;
 
 

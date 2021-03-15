@@ -21,8 +21,10 @@ import java.util.Optional;
 @Service
 public class PostCommentsService {
 
-    @Value("${comment.text.min.length}")
+    @Value("${comment.text.length.min}")
     private int commentTexMinLength;
+    @Value("${comment.text.length.max}")
+    private int commentTexMaxLength;
 
     private final PostCommentsRepository postCommentsRepository;
     private final PostRepository postRepository;
@@ -78,7 +80,12 @@ public class PostCommentsService {
             error.append("Текст комментария не задан. ");
         } else {
             if (text.length() < commentTexMinLength) {
-                error.append("Текст комментария слишком короткий. ");
+                error.append("Текст комментария слишком короткий. Минимальная длина: "
+                        + commentTexMinLength);
+            }
+            if (text.length() < commentTexMaxLength) {
+                error.append("Текст комментария слишком длинный. Максимальная длина: "
+                        + commentTexMaxLength);
             }
         }
 

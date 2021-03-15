@@ -70,22 +70,22 @@ storage:
 
 comment:
   text:
-    min:
-      length: 3
+    length:
+      min: 3
+      max: 100
+
 post:
   announce:
-    max:
-      length: 150
+    length:
+      max: 150
   title:
-    min:
-      length: 3
-    max:
-      length: 100
+    length:
+      min: 3
+      max: 100
   text:
-    min:
-      length: 50
-    max:
-      length: 250
+    length:
+      min: 50
+      max: 250
 
 
 
