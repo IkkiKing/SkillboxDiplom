@@ -85,7 +85,7 @@ post:
   text:
     length:
       min: 50
-      max: 500
+      max: 1000
 
 
 
