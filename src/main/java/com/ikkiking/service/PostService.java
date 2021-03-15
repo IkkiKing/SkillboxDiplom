@@ -296,9 +296,7 @@ public class PostService {
      * Вспомогательная процедура наполнения поста.
      */
     private PostResponse convertToPostResponse(Page<Post> postPage) {
-
         List<PostForResponse> listPosts = new ArrayList<>();
-
         postPage.get().forEach(post -> {
 
             Votes votes = postVoteRepository.getVotes(post.getId());
@@ -309,7 +307,7 @@ public class PostService {
 
             String announce = post.getText()
                     .replaceAll("\\<.*?>", "")
-                    .replaceAll("&nbsp;"," ");
+                    .replaceAll("&nbsp;", " ");
             if (announce.length() > postAnnounceMaxLength) {
                 announce = announce.substring(0, postAnnounceMaxLength).concat("...");
             }
