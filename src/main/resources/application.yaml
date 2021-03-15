@@ -81,11 +81,11 @@ post:
   title:
     length:
       min: 3
-      max: 100
+      max: 255
   text:
     length:
       min: 50
-      max: 250
+      max: 500
 
 
 

@@ -83,7 +83,7 @@ public class PostCommentsService {
                 error.append("Текст комментария слишком короткий. Минимальная длина: "
                         + commentTexMinLength);
             }
-            if (text.length() < commentTexMaxLength) {
+            if (text.length() > commentTexMaxLength) {
                 error.append("Текст комментария слишком длинный. Максимальная длина: "
                         + commentTexMaxLength);
             }

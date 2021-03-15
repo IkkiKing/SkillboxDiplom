@@ -498,7 +498,7 @@ public class PostService {
             postErrorResponse.setText("Текст публикации слишком короткий. Минимальный: "
                     + postTextMinLength);
         }
-        if (postRequest.getText().length() < postTextMaxLength) {
+        if (postRequest.getText().length() > postTextMaxLength) {
             postErrorResponse.setText("Текст публикации слишком большой. Максимальный: "
                     + postTextMaxLength);
         }
@@ -506,6 +506,7 @@ public class PostService {
                 || postErrorResponse.getText() != null) {
             throw new PostException(postErrorResponse);
         }
+        log.info("Кол-во символов: " + postRequest.getText().length());
     }
 
     /**
