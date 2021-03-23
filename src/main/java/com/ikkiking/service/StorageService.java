@@ -3,15 +3,16 @@ package com.ikkiking.service;
 import com.ikkiking.api.response.ImageErrorResponse;
 import com.ikkiking.api.response.ImageResponse;
 import com.ikkiking.api.response.ProfileErrorResponse;
+import com.ikkiking.base.exception.ImageUploadException;
+import com.ikkiking.base.exception.ProfileException;
 import com.ikkiking.base.storage.CloudUtil;
 import com.ikkiking.base.storage.FileUtil;
 import com.ikkiking.base.storage.StorageUtil;
-import com.ikkiking.base.exception.ImageUploadException;
-import com.ikkiking.base.exception.ProfileException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 
 
@@ -19,8 +20,7 @@ import java.io.IOException;
 @Slf4j
 public class StorageService {
 
-    @Value("${cloud.image.url}")
-    private String cloudImageUrl;
+    private String cloudImageUrl = System.getenv("CLOUDINARY_URL");
 
     @Value("${file.path}")
     private String filePath;

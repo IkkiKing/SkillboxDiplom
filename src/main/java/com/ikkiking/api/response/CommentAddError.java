@@ -1,10 +1,12 @@
 package com.ikkiking.api.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
 public class CommentAddError {
-    private final String text;
+    private String text;
 }

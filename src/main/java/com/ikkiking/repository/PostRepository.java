@@ -67,7 +67,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findMyPosts(Pageable pageable, String email, int isActive, String moderationStatus);
 
 
-    @Query(value = "select YEAR(p.time) as year, DATE_FORMAT(DATE(p.time), '%Y-%m-%d') as date, "
+    @Query(value = "select YEAR(p.time) as year, DATE(p.time) as date, "
             + "count(*) as amount from posts p "
             + "where p.is_active = 1 and p.moderation_status = 'ACCEPTED' "
             + "and p.time < sysdate()  "
@@ -88,8 +88,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             + "        and p.moderation_status = 'ACCEPTED'"
             + "        and p.time < sysdate()"
             + "        and p.user_id = :userId) pp,"
-            + "     (select COUNT(IF(value = 1, 1, null)) as likesCount,"
-            + "             COUNT(IF(value = -1, 1, null)) as dislikesCount"
+            + "     (select sum(case when pv.value = 1 then 1 else null end) as likesCount, "
+            + "             sum(case when pv.value = -1 then 1 else null end) as dislikesCount "
             + "      from post_votes pv"
             + "      where pv.user_id = :userId) pv",
             nativeQuery = true)
@@ -107,8 +107,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             + "      where p.is_active = 1"
             + "        and p.moderation_status = 'ACCEPTED'"
             + "        and p.time < sysdate()) pp,"
-            + "     (select COUNT(IF(value = 1, 1, null)) as likesCount,"
-            + "             COUNT(IF(value = -1, 1, null)) as dislikesCount"
+            + "     (select sum(case when pv.value = 1 then 1 else null end) as likesCount, "
+            + "             sum(case when pv.value = -1 then 1 else null end) as dislikesCount "
             + "      from post_votes pv) pv",
             nativeQuery = true)
     StatisticCustom findAllStatistic();

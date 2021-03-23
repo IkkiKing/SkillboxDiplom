@@ -1,11 +1,21 @@
+
 spring:
   datasource:
-    url: jdbc:${CLEARDB_DATABASE_URL:mysql://localhost:3306/forum?serverTimezone=UTC}
-    username: root
-    password: CTpmqjV99F
+    driver-class-name: org.h2.Driver
+    password: test
+    url: jdbc:h2:mem:test;MODE=MySql
+    username: test
   jpa:
-    hibernate.ddl-auto: none
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        default_schema: public
+        dialect: org.hibernate.dialect.H2Dialect
     show-sql: true
+    hibernate:
+      ddl-auto: none
+    profiles:
+      active: test
   servlet:
     multipart:
       max-file-size: 10MB
@@ -20,7 +30,9 @@ spring:
     baselineOnMigrate: true
 
 server:
-  port: ${PORT:8080}
+  port: 8080
+  servlet:
+    context-path: /test
 
 mail:
   email: DeveloperSmelovEA@yandex.ru
@@ -42,7 +54,7 @@ captcha:
   width: 100
   height: 35
   secretCode:
-      length: 35
+    length: 35
 
 password:
   min:
@@ -60,6 +72,10 @@ file:
     size: 5_000_000
     width: 36
     height: 36
+
+cloud:
+  image:
+    url: cloudinary://942858327361784:NCZQ3GuY9FPG3fv3p0BpuzrzaeM@db20eod0q
 
 storage:
   mode: cloud
@@ -81,8 +97,4 @@ post:
   text:
     length:
       min: 50
-      max: 65535
-
-
-
-
+      max: 1000
