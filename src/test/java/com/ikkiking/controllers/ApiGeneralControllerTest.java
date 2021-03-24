@@ -15,7 +15,6 @@ import com.ikkiking.api.response.tag.TagResponse;
 import com.ikkiking.model.Post;
 import com.ikkiking.repository.PostRepository;
 import com.ikkiking.repository.StatisticCustom;
-import com.ikkiking.repository.UserRepository;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -46,8 +45,6 @@ public class ApiGeneralControllerTest {
     private ObjectMapper objectMapper;
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private UserRepository userRepository;
     @Autowired
     private PostRepository postRepository;
 

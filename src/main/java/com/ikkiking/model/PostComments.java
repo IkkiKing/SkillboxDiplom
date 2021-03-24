@@ -31,7 +31,7 @@ public class PostComments {
 
     @NotNull(message = "post_comments.user_id may not be null")
     @JoinColumn(name = "user_id")
-    @ManyToOne(optional = false, cascade = CascadeType.ALL)
+    @ManyToOne(optional = false, cascade = CascadeType.MERGE)
     private User user;
 
     @NotNull(message = "post_comments.time may not be null")

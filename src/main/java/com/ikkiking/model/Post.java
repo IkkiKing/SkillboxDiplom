@@ -37,13 +37,13 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private ModerationStatus moderationStatus = ModerationStatus.NEW;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "moderator_id")
     private User moderator;
 
     @NotNull(message = "posts.user_id may not be null")
     @JoinColumn(name = "user_id")
-    @ManyToOne(optional = false, cascade = CascadeType.ALL)
+    @ManyToOne(optional = false, cascade = CascadeType.MERGE)
     private User user;
 
     @NotNull(message = "posts.time may not be null")
