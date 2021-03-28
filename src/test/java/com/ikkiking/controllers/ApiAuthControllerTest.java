@@ -69,8 +69,8 @@ public class ApiAuthControllerTest {
     public void step01_captcha() throws Exception {
         String result = testUtil.sendGet("/api/auth/captcha", status().isOk());
         AuthCaptchaResponse response = objectMapper.readValue(result, new TypeReference<>() {});
-        assertThat((response.getImage())).isNotNull();
-        assertThat((response.getSecret())).isNotNull();
+        assertThat(response.getImage()).isNotNull();
+        assertThat(response.getSecret()).isNotNull();
     }
 
 

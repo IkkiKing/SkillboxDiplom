@@ -118,4 +118,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             nativeQuery = true)
     int countPostsForModeration();
 
+    Post findTopByOrderByIdDesc();
+
 }

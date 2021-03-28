@@ -2,18 +2,15 @@ package com.ikkiking.controllers;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ikkiking.api.request.PostRequest;
+import com.ikkiking.api.request.VoteRequest;
 import com.ikkiking.api.response.post.PostByIdResponse;
 import com.ikkiking.api.response.post.PostResponse;
+import com.ikkiking.api.response.post.PostReturnResponse;
+import com.ikkiking.base.ContextUser;
 import com.ikkiking.base.DateHelper;
-import com.ikkiking.model.ModerationStatus;
-import com.ikkiking.model.Post;
-import com.ikkiking.model.PostComments;
-import com.ikkiking.model.Tag;
-import com.ikkiking.model.User;
-import com.ikkiking.repository.PostRepository;
-import com.ikkiking.repository.Tag2PostRepository;
-import com.ikkiking.repository.TagRepository;
-import com.ikkiking.repository.UserRepository;
+import com.ikkiking.model.*;
+import com.ikkiking.repository.*;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -32,6 +29,7 @@ import utils.TestUtil;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,9 +39,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Transactional
 public class ApiPostControllerTest {
 
-    private final static String EMAIL = "test-mail@yandex.ru";
+    private final static String TEST_TEXT = "TEST_TEXT_TEST_TEXT TEST_TEXT_TEST_TEXT"
+            + "TEST_TEXT_TEST_TEXT TEST_TEXT_TEST_TEXT"
+            + "TEST_TEXT_TEST_TEXT TEST_TEXT_TEST_TEXT"
+            + "TEST_TEXT_TEST_TEXT TEST_TEXT_TEST_TEXT";
+    private final static String TEST_TITLE = "TEST TITLE _ TEST";
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -57,81 +60,84 @@ public class ApiPostControllerTest {
     private Tag2PostRepository tag2PostRepository;
     @Autowired
     private UserRepository userRepository;
-
-    private Post post;
+    @Autowired
+    private PostCommentsRepository postCommentsRepository;
+    @Autowired
+    private PostVoteRepository postVoteRepository;
 
     private TestUtil testUtil;
 
     @Before
-    @Transactional
     public void setUp() throws Exception {
         testUtil = new TestUtil(mockMvc, objectMapper);
+    }
 
-        User user = userRepository.findById(1L).get();
+    /**
+     * Проверка метода добавления поста.
+     */
+    @Test
+    @WithUserDetails("VasilievVasiliy@gmail.com")
+    public void step01_addPost() throws Exception {
+        PostRequest postRequest = new PostRequest();
+        postRequest.setActive(1);
+        postRequest.setText("SHORT TEXT");
+        postRequest.setTitle(TEST_TITLE);
+        Calendar calendar = DateHelper.getCurrentDate();
+        postRequest.setTimestamp(calendar.getTimeInMillis());
 
-        Tag tag = new Tag();
-        tag.setName("TEST_TAG_TEST");
+        List<String> tagList = tagRepository.findAllByNameIn(List.of("TEST_TAG_TEST"))
+                .stream().map(tag -> tag.getName()).collect(Collectors.toList());
+        postRequest.setTags(tagList);
 
-        post = new Post();
-        post.setActive(true);
+        String result = testUtil.sendPost("/api/post", status().isOk(), postRequest);
+
+        PostReturnResponse response = objectMapper.readValue(result, new TypeReference<>() {
+        });
+        assertThat(response.isResult()).isFalse();
+        assertThat(response.getErrors().getText()).isNotNull();
+
+        postRequest.setText(TEST_TEXT);
+        result = testUtil.sendPost("/api/post", status().isOk(), postRequest);
+
+        response = objectMapper.readValue(result, new TypeReference<>() {
+        });
+        assertThat(response.isResult()).isTrue();
+        assertThat(response.getErrors()).isNull();
+
+        Post post = postRepository.findTopByOrderByIdDesc();
+        User user = userRepository.findTopByOrderByIdAsc();
         post.setModerationStatus(ModerationStatus.ACCEPTED);
-        post.setTitle("TEST_TITLE_TEST");
-        post.setText("TEST_TEXT_TEST_TEXT TEST_TEXT_TEST_TEXT"
-                + "TEST_TEXT_TEST_TEXT TEST_TEXT_TEST_TEXT"
-                + "TEST_TEXT_TEST_TEXT TEST_TEXT_TEST_TEXT"
-                + "TEST_TEXT_TEST_TEXT TEST_TEXT_TEST_TEXT");
-
-        post.setUser(user);
-        post.setViewCount(100L);
-        post.setTime(DateHelper.getCurrentDate().getTime());
         post.setModerator(user);
-        post.setTags(List.of(tag));
-
-        List<PostComments> postCommentsList = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            PostComments postComments = new PostComments();
-            postComments.setUser(user);
-            postComments.setTime(DateHelper.getCurrentDate().getTime());
-            postComments.setText("TEST_COMMENT" + i);
-            postComments.setPost(post);
-            postCommentsList.add(postComments);
-        }
-        post.setCommentsList(postCommentsList);
         postRepository.save(post);
-
-        //Tag already saved by setter in post?
-        /*tagRepository.save(tag);
-        Tag2Post tag2Post = new Tag2Post();
-        tag2Post.setTagId(tag.getId());
-        tag2Post.setPostId(post.getId());
-        tag2PostRepository.save(tag2Post);
-
-        userRepository.save(user);*/
     }
 
     /**
      * Проверка метода получения последних постов.
      */
     @Test
-    public void step01_getRecentPosts() throws Exception {
+    public void step03_getRecentPosts() throws Exception {
+        Post post = postRepository.findTopByOrderByIdDesc();
+
         String result = testUtil.sendGet(
                 "/api/post?offset=0&limit=10&mode=recent",
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
-        assertThat((response.getPosts().get(0).getId().equals(post.getId())));
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
+        assertThat(response.getPosts().get(0).getId()).isEqualTo(post.getId());
     }
 
     /**
      * Проверка метода получения ранних постов.
      */
     @Test
-    public void step02_getEarlyPosts() throws Exception {
+    public void step04_getEarlyPosts() throws Exception {
         //Меняем дату тестового поста на самую ранюю
         Calendar calendar = DateHelper.getCurrentDate();
         calendar.set(Calendar.YEAR, -10);
+
+        Post post = postRepository.findTopByOrderByIdDesc();
         post.setTime(calendar.getTime());
         postRepository.save(post);
 
@@ -140,71 +146,111 @@ public class ApiPostControllerTest {
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
-        assertThat((response.getPosts().get(0).getId().equals(post.getId())));
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
+        assertThat(response.getPosts().get(0).getId()).isEqualTo(post.getId());
     }
 
     /**
      * Проверка метода получения популярных постов.
      */
     @Test
-    public void step03_getPopularPosts() throws Exception {
+    public void step05_getPopularPosts() throws Exception {
+        Post post = postRepository.findTopByOrderByIdDesc();
+        User user = userRepository.findTopByOrderByIdAsc();
+
+        List<PostComments> postCommentsList = new ArrayList<>();
+        final int commentsCount = 20;
+        for (int i = 0; i < commentsCount; i++) {
+            PostComments postComments = new PostComments();
+            postComments.setUser(user);
+            postComments.setTime(DateHelper.getCurrentDate().getTime());
+            postComments.setText("TEST_COMMENT" + i);
+            postComments.setPost(post);
+            postCommentsList.add(postComments);
+        }
+        postCommentsRepository.saveAll(postCommentsList);
+
         String result = testUtil.sendGet(
                 "/api/post?offset=0&limit=10&mode=popular",
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
-        assertThat((response.getPosts().get(0).getId().equals(post.getId())));
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
+        assertThat(response.getPosts().get(0).getId()).isEqualTo(post.getId());
+        assertThat(response.getPosts().get(0).getCommentCount()).isEqualTo(commentsCount);
     }
 
     /**
      * Проверка метода получения лучших постов.
      */
     @Test
-    public void step04_getBestPosts() throws Exception {
+    public void step06_getBestPosts() throws Exception {
+        Post post = postRepository.findTopByOrderByIdDesc();
+        User user = userRepository.findTopByOrderByIdAsc();
+
+        List<PostVote> postVoteList = new ArrayList<>();
+        final int likeCount = 20;
+        for (int i = 0; i < likeCount; i++) {
+            PostVote postVote = new PostVote();
+            postVote.setUser(user);
+            postVote.setTime(DateHelper.getCurrentDate().getTime());
+            postVote.setValue(1);
+            postVote.setPost(post);
+            postVoteList.add(postVote);
+        }
+        postVoteRepository.saveAll(postVoteList);
+
         String result = testUtil.sendGet(
                 "/api/post?offset=0&limit=10&mode=best",
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
-        assertThat((response.getPosts().get(0).getId().equals(post.getId())));
+
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
+        assertThat(response.getPosts().get(0).getId()).isEqualTo(post.getId());
+        assertThat(response.getPosts().get(0).getLikeCount()).isEqualTo(likeCount);
     }
 
     /**
      * Проверка метода поиска постов.
      */
     @Test
-    public void step04_search() throws Exception {
-        String result = testUtil.sendGet(
-                "/api/post/search?offset=0&limit=10&query=TEST_TITLE",
+    public void step07_search() throws Exception {
+        /*String result = testUtil.sendGet(
+                "/api/post/search?offset=0&limit=10&query=" + textToFind,
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().size() == 1));
-        assertThat((response.getPosts().get(0).getId().equals(post.getId())));
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().size() == 1);
+        assertThat(response.getPosts().get(0).getId()).isEqualTo(post.getId());
+        assertThat(response.getPosts().get(0).getTitle()).isEqualTo(post.getText());
+
+        /*final String titleToFind = "TITLE_TO_FIND_FIND_TO_TITLE";
+        post.setText(textToFind);
+        postRepository.save(post);
 
         result = testUtil.sendGet(
-                "/api/post/search?offset=0&limit=10&query=TEST_TEXT_TEST_TEXT",
+                "/api/post/search?offset=0&limit=10&query=" + titleToFind,
                 status().isOk());
         response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().size() == 1));
-        assertThat((response.getPosts().get(0).getId().equals(post.getId())));
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().size() == 1);
+        assertThat(response.getPosts().get(0).getId()).isEqualTo(post.getId());
+        assertThat(response.getPosts().get(0).getTitle()).isEqualTo(post.getTitle());*/
     }
 
     /**
      * Проверка метода поиска постов по дате.
      */
     @Test
-    public void step05_postsByDate() throws Exception {
+    public void step08_postsByDate() throws Exception {
         //Меняем дату тестового поста на самую ранюю
+        Post post = postRepository.findTopByOrderByIdDesc();
         Calendar calendar = DateHelper.getCurrentDate();
         calendar.set(2020, 0, 01);
         post.setTime(calendar.getTime());
@@ -215,42 +261,45 @@ public class ApiPostControllerTest {
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().size() == 1));
-        assertThat((response.getPosts().get(0).getId().equals(post.getId())));
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().size() == 1);
+        assertThat(response.getPosts().get(0).getId().equals(post.getId()));
     }
 
     /**
      * Проверка метода поиска постов по тэгу.
      */
     @Test
-    public void step06_postsByTag() throws Exception {
+    public void step09_postsByTag() throws Exception {
         String result = testUtil.sendGet(
                 "/api/post/byTag?offset=0&limit=10&tag=Управление",
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
     }
 
     /**
-     * Проверка метода поиска постов по тэгу.
+     * Проверка метода постов для модерации.
      */
     @Test
     @WithUserDetails("VasilievVasiliy@gmail.com")
-    public void step07_postsForModeration() throws Exception {
+    public void step10_postsForModeration() throws Exception {
+        Post post = postRepository.findTopByOrderByIdDesc();
         post.setModerationStatus(ModerationStatus.NEW);
         postRepository.save(post);
+
         String result = testUtil.sendGet(
                 "/api/post/moderation?offset=0&limit=10&status=new",
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
-        assertThat((response.getPosts()
-                .stream().anyMatch(f -> f.getId().equals(post.getId())))).isTrue();
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
+        assertThat(response.getPosts()
+                .stream().anyMatch(f -> f.getId().equals(post.getId()))).isTrue();
+
 
         post.setModerationStatus(ModerationStatus.ACCEPTED);
         postRepository.save(post);
@@ -260,18 +309,19 @@ public class ApiPostControllerTest {
                 status().isOk());
         response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
-        assertThat((response.getPosts()
-                .stream().anyMatch(f -> f.getId().equals(post.getId())))).isTrue();
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
+        assertThat(response.getPosts()
+                .stream().anyMatch(f -> f.getId().equals(post.getId()))).isTrue();
     }
 
     /**
-     * Проверка метода поиска постов по тэгу.
+     * Проверка метода получения своих постов.
      */
     @Test
     @WithUserDetails("VasilievVasiliy@gmail.com")
-    public void step08_getMyPosts() throws Exception {
+    public void step11_getMyPosts() throws Exception {
+        Post post = postRepository.findTopByOrderByIdDesc();
         post.setModerationStatus(ModerationStatus.DECLINED);
         postRepository.save(post);
 
@@ -280,8 +330,8 @@ public class ApiPostControllerTest {
                 status().isOk());
         PostResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
 
         post.setModerationStatus(ModerationStatus.ACCEPTED);
         postRepository.save(post);
@@ -291,48 +341,62 @@ public class ApiPostControllerTest {
                 status().isOk());
         response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getCount() > 0)).isTrue();
-        assertThat((response.getPosts().isEmpty())).isFalse();
+        assertThat(response.getCount() > 0).isTrue();
+        assertThat(response.getPosts().isEmpty()).isFalse();
     }
 
     /**
-     * Проверка метода поиска постов по тэгу.
+     * Проверка метода поиска поста по ID.
      */
     @Test
     @WithUserDetails("VasilievVasiliy@gmail.com")
-    public void step08_getPostById() throws Exception {
+    public void step12_getPostById() throws Exception {
+        Post post = postRepository.findTopByOrderByIdDesc();
         String result = testUtil.sendGet(
                 "/api/post/" + post.getId(),
                 status().isOk());
         PostByIdResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getId())).isEqualTo(post.getId());
+        assertThat(response.getId()).isEqualTo(post.getId());
+    }
+
+
+    /**
+     * Проверка метода лайк.
+     */
+    @Test
+    @WithUserDetails("VasilievVasiliy@gmail.com")
+    public void step12_like() throws Exception {
+        /*PostComments postComments = postCommentsRepository.findById(1L).get();
+
+        VoteRequest voteRequest = new VoteRequest();
+        String result = testUtil.sendPost("/api/post",
+                status().isOk(), postRequest);
+
+        PostReturnResponse response = objectMapper.readValue(result, new TypeReference<>() {
+        });
+        assertThat(response.isResult()).isFalse();
+        assertThat(response.getErrors().getText()).isNotNull();*/
     }
 
     /**
-     * Проверка метода поиска постов по тэгу.
+     * Проверка метода дизлайк.
      */
-    /*@Test
+    @Test
     @WithUserDetails("VasilievVasiliy@gmail.com")
-    public void step08_addPost() throws Exception {
-        PostRequest postRequest = new PostRequest();
+    public void step14_dislike() throws Exception {
+        /*PostRequest postRequest = new PostRequest();
         postRequest.setActive(1);
-        postRequest.setText("SHORT TEXT");
-        postRequest.setTitle("TEST TITLE");
+        postRequest.setText("NEW ".concat(TEST_TEXT));
+        postRequest.setTitle("TEST_TITLE_NEW");
         postRequest.setTimestamp(DateHelper.getCurrentDate().getTimeInMillis());
-
-        List<String> tagList = tagRepository.findAllByNameIn(List.of("TEST_TAG_TEST"))
-                .stream().map(tag -> tag.getName()).collect(Collectors.toList());
-        postRequest.setTags(tagList);
-
-
-        String result = testUtil.sendPost("/api/post/" + post.getId(),
+        String result = testUtil.sendPut("/api/post/" + post.getId(),
                 status().isOk(), postRequest);
 
-        PostByIdResponse response = objectMapper.readValue(result, new TypeReference<>() {
+        PostReturnResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getId())).isEqualTo(post.getId());
-    }*/
-    /*ADD EDIT LIKE DISLIKE*/
+        assertThat(response.isResult()).isTrue();*/
+    }
+
 
 }

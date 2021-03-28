@@ -63,12 +63,12 @@ public class ApiGeneralControllerTest {
         String result = testUtil.sendGet("/api/init", status().isOk());
         InitResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getTitle())).isNotNull();
-        assertThat((response.getSubtitle())).isNotNull();
-        assertThat((response.getEmail())).isNotNull();
-        assertThat((response.getPhone())).isNotNull();
-        assertThat((response.getCopyright())).isNotNull();
-        assertThat((response.getCopyrightFrom())).isNotNull();
+        assertThat(response.getTitle()).isNotNull();
+        assertThat(response.getSubtitle()).isNotNull();
+        assertThat(response.getEmail()).isNotNull();
+        assertThat(response.getPhone()).isNotNull();
+        assertThat(response.getCopyright()).isNotNull();
+        assertThat(response.getCopyrightFrom()).isNotNull();
     }
 
     /**
@@ -86,9 +86,9 @@ public class ApiGeneralControllerTest {
         String result = testUtil.sendGet("/api/settings", status().isOk());
         SettingsResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.isMultiUserMode())).isFalse();
-        assertThat((response.isPostPremoderation())).isFalse();
-        assertThat((response.isStatisticsIsPublic())).isFalse();
+        assertThat(response.isMultiUserMode()).isFalse();
+        assertThat(response.isPostPremoderation()).isFalse();
+        assertThat(response.isStatisticsIsPublic()).isFalse();
 
         settingsRequest.setMultiUserMode(true);
         settingsRequest.setPostPreModeration(true);
@@ -98,9 +98,9 @@ public class ApiGeneralControllerTest {
         result = testUtil.sendGet("/api/settings", status().isOk());
         response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.isMultiUserMode())).isTrue();
-        assertThat((response.isPostPremoderation())).isTrue();
-        assertThat((response.isStatisticsIsPublic())).isTrue();
+        assertThat(response.isMultiUserMode()).isTrue();
+        assertThat(response.isPostPremoderation()).isTrue();
+        assertThat(response.isStatisticsIsPublic()).isTrue();
     }
 
     /**
@@ -111,13 +111,13 @@ public class ApiGeneralControllerTest {
         String result = testUtil.sendGet("/api/tag", status().isOk());
         TagResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getTags())).isNotEmpty();
+        assertThat(response.getTags()).isNotEmpty();
 
         final String query = "Управление";
         result = testUtil.sendGet("/api/tag?query=" + query, status().isOk());
         response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getTags().size() == 1)).isTrue();
+        assertThat(response.getTags().size() == 1).isTrue();
     }
 
     /**
@@ -128,16 +128,16 @@ public class ApiGeneralControllerTest {
         String result = testUtil.sendGet("/api/calendar", status().isOk());
         CalendarResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getYears())).isNotEmpty();
+        assertThat(response.getYears()).isNotEmpty();
 
         final int year = 2020;
         result = testUtil.sendGet("/api/calendar?year=" + year, status().isOk());
         response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.getYears())).isNotEmpty();
-        assertThat((response.getPosts().keySet().stream()
+        assertThat(response.getYears()).isNotEmpty();
+        assertThat(response.getPosts().keySet().stream()
                 .filter(f -> f.contains(String.valueOf(year)))
-                .findAny().isPresent())).isTrue();
+                .findAny().isPresent()).isTrue();
     }
 
     /**
@@ -151,7 +151,7 @@ public class ApiGeneralControllerTest {
         });
         StatisticCustom statisticCustom = postRepository.findMyStatisticByUserId(1L);
 
-        assertThat((response.getFirstPublication())).isEqualTo(
+        assertThat(response.getFirstPublication()).isEqualTo(
                 TimeUnit.MILLISECONDS.toSeconds(statisticCustom.getFirstPublication().getTime()));
     }
 
@@ -165,7 +165,7 @@ public class ApiGeneralControllerTest {
         });
         Post post = postRepository.findById(1L).get();
 
-        assertThat((response.getFirstPublication())).isEqualTo(
+        assertThat(response.getFirstPublication()).isEqualTo(
                 TimeUnit.MILLISECONDS.toSeconds(post.getTime().getTime()));
     }
 
@@ -183,8 +183,8 @@ public class ApiGeneralControllerTest {
         String result = testUtil.sendPost("/api/comment", status().isBadRequest(), commentRequest);
         CommentAddResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.isResult())).isFalse();
-        assertThat((response.getErrors().getText())).isNotNull();
+        assertThat(response.isResult()).isFalse();
+        assertThat(response.getErrors().getText()).isNotNull();
 
         final String text = "TEST_TEXT";
         commentRequest.setPostId(postId);
@@ -192,7 +192,7 @@ public class ApiGeneralControllerTest {
         result = testUtil.sendPost("/api/comment", status().isOk(), commentRequest);
         response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.isResult())).isTrue();
+        assertThat(response.isResult()).isTrue();
     }
 
     /**
@@ -208,47 +208,14 @@ public class ApiGeneralControllerTest {
         String result = testUtil.sendPost("/api/moderation", status().isOk(), moderationRequest);
         ModerationResponse response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.isResult())).isTrue();
+        assertThat(response.isResult()).isTrue();
 
         moderationRequest.setDecision("accept");
 
         result = testUtil.sendPost("/api/moderation", status().isOk(), moderationRequest);
         response = objectMapper.readValue(result, new TypeReference<>() {
         });
-        assertThat((response.isResult())).isTrue();
+        assertThat(response.isResult()).isTrue();
     }
-
-    /**
-     * Проверка загрузки изображения.
-     */
-    /*@Test
-    @WithUserDetails("VasilievVasiliy@gmail.com")
-    public void step09_image() throws Exception {
-        InputStream inputStream =
-                Thread.currentThread().getContextClassLoader().getResourceAsStream("test_image.png");
-        MockMultipartFile multipartFile = new MockMultipartFile("file", inputStream);
-
-        HashMap<String, String> contentTypeParams = new HashMap<>();
-        contentTypeParams.put("boundary", "265001916915724");
-        MediaType mediaType = new MediaType("multipart", "form-data", contentTypeParams);
-
-        MvcResult result = mockMvc.perform(
-                MockMvcRequestBuilders
-                        .post("/api/image")
-                        .contentType(mediaType)
-                        .content(multipartFile.getBytes())
-                        .accept(MediaType.APPLICATION_JSON))
-                .andReturn();
-        Object response = objectMapper.readValue(
-                result.getResponse().getContentAsString(), new TypeReference<>() {});
-
-        if (response instanceof ImageResponse) {
-            ImageResponse value = (ImageResponse) response;
-        } else if (response instanceof String) {
-            String value = (String) response;
-        }
-        //image profile x2
-    }*/
-
 
 }
