@@ -19,8 +19,6 @@ import java.io.IOException;
 @Slf4j
 public class StorageService {
 
-    private String cloudImageUrl = System.getenv("CLOUDINARY_URL");
-
     @Value("${file.path}")
     private String filePath;
 
@@ -112,9 +110,10 @@ public class StorageService {
      * */
     private StorageUtil getStorageUtil(MultipartFile multipartFile) {
         StorageUtil storageUtil;
+
         switch (mode) {
             case "cloud":
-                storageUtil = new CloudUtil(cloudImageUrl,
+                storageUtil = new CloudUtil(System.getenv("CLOUDINARY_URL"),
                         multipartFile);
                 break;
             default:
