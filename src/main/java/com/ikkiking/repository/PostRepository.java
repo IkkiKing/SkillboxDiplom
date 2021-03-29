@@ -7,8 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
-import java.util.Date;
 import java.util.List;
 
 
@@ -119,5 +117,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     int countPostsForModeration();
 
     Post findTopByOrderByIdDesc();
+
+    @Query(value = "SELECT * FROM posts p WHERE p.is_active = 1 and p.moderation_status = 'ACCEPTED' "
+            + "and p.time < sysdate() order by p.id desc limit 1",
+            nativeQuery = true)
+    Post findTop();
 
 }
