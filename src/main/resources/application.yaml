@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:${CLEARDB_DATABASE_URL:mysql://localhost:3306/forum?serverTimezone=UTC}
-    username: root
-    password: CTpmqjV99F
+    url: jdbc:${DB_URL:mysql://localhost:3306/forum?serverTimezone=UTC}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate.ddl-auto: none
     show-sql: true
@@ -11,11 +11,11 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   mail:
-    host: smtp.yandex.ru
-    port: 465
-    username: DeveloperSmelovEA@yandex.ru
-    password: DevelopSomething
-    protocol: smtps
+    host: ${EMAIL_HOST}
+    port: ${EMAIL_PORT}
+    username: ${EMAIL_RESTORE}
+    password: ${EMAIL_PASSWORD}
+    protocol: ${EMAIL_PROTOCOL}
   flyway:
     baselineOnMigrate: true
 
@@ -62,7 +62,7 @@ file:
     height: 36
 
 storage:
-  mode: cloud
+  mode: ${STORAGE_TYPE}
 
 comment:
   text:

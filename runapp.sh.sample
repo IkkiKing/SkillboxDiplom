@@ -1,0 +1,12 @@
+export PORT=8080
+export DB_URL=mysql://localhost:3306/forum?serverTimezone=UTC
+export DB_USERNAME=USER_NAME
+export DB_PASSWORD=USER_PASSWORD
+export STORAGE_TYPE=cloud
+export EMAIL_HOST=smtp.yandex.ru
+export EMAIL_PORT=675
+export EMAIL_RESTORE=SOMETHING@yandex.ru
+export EMAIL_PASSWORD=QWERTY
+export EMAIL_PROTOCOL=smtp
+
+java -jar target/blog-engine-1.0.jar
