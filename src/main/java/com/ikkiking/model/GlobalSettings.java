@@ -14,6 +14,8 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GlobalSettings {
+
+    //test 7
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
