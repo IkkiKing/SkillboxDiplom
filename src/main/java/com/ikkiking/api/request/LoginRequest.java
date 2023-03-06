@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginRequest {
+    //TEST1
+
     @JsonProperty("e_mail")
     private String email;
     private String password;

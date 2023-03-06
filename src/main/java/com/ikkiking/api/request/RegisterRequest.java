@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class RegisterRequest {
-
+    //test 3
     @JsonProperty("e_mail")
     private String email;
     private String name;

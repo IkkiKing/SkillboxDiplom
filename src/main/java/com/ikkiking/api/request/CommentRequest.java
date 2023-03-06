@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 public class CommentRequest {
-
+    //TEST
     @JsonProperty("parent_id")
     private Long parentId;
     @JsonProperty("post_id")

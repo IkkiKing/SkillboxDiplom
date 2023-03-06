@@ -53,4 +53,5 @@
 [Техническое задание](API%20BLOG.pdf)
 [Спецификация БД](DB%20BLOG.pdf)
 
-master commit
+
+commit 3

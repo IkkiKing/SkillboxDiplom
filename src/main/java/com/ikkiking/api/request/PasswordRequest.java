@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PasswordRequest {
+    //TEST 2
+
     private String code;
     private String password;
     private String captcha;
